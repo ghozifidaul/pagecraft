@@ -10,6 +10,12 @@
       "database_id": "0ca6d49e-a874-4527-8b9c-9c05c3f408c1",
     },
   ],
+  "r2_buckets": [
+    {
+      "binding": "IMAGE_BUCKET",
+      "bucket_name": "pagecraft-images"
+    }
+  ],
   "compatibility_flags": ["nodejs_compat"],
   // "vars": {
   //   "MY_VAR": "my-variable"
