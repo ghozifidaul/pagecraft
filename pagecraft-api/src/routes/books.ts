@@ -2,6 +2,7 @@ import { Hono } from "hono"
 import * as Books from "../db/books"
 import * as Pages from "../db/pages"
 import { generateBookStory } from "../services/story.service"
+import { getSignedImageUrl } from "../services/image.service"
 import type { CreateBookInput } from "../types/db"
 
 const router = new Hono<{ Bindings: CloudflareBindings }>()
@@ -21,7 +22,19 @@ router.get("/:id", async (c) => {
 
   const pages = await Pages.getPagesByBookId(c.env.pagecraft_db, id)
 
-  return c.json({ ...book, pages })
+  const pagesWithUrls = await Promise.all(pages.map(async (page) => {
+    if (page.image_r2_key) {
+      const signedUrl = await getSignedImageUrl({
+        R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
+        R2_SECRET_ACCESS_KEY: (c.env as any).R2_SECRET_ACCESS_KEY,
+        R2_ENDPOINT: (c.env as any).R2_ENDPOINT,
+      }, page.image_r2_key);
+      return { ...page, imageUrl: signedUrl };
+    }
+    return page;
+  }));
+
+  return c.json({ ...book, pages: pagesWithUrls })
 })
 
 router.post("/", async (c) => {

@@ -3,6 +3,7 @@ import * as Books from "../db/books"
 import * as Pages from "../db/pages"
 import { regeneratePageStory } from "../services/story.service"
 import { generatePageIllustration } from "../services/illustration.service"
+import { uploadImage, getSignedImageUrl } from "../services/image.service"
 
 const router = new Hono<{ Bindings: CloudflareBindings }>()
 
@@ -115,11 +116,24 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
       feedback: body.feedback,
     })
 
-    await Pages.updatePageImageKey(c.env.pagecraft_db, pageId, illustration.data)
+    const imageBuffer = Buffer.from(illustration.data, 'base64');
+    const r2Key = await uploadImage({
+      IMAGE_BUCKET: c.env.IMAGE_BUCKET,
+      R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
+      R2_SECRET_ACCESS_KEY: (c.env as any).R2_SECRET_ACCESS_KEY,
+      R2_ENDPOINT: (c.env as any).R2_ENDPOINT,
+    }, bookId, pageId, imageBuffer);
 
-    const updated = await Pages.getPageById(c.env.pagecraft_db, pageId)
+    await Pages.updatePageImageKey(c.env.pagecraft_db, pageId, r2Key);
 
-    return c.json({ ...updated, illustration })
+    const updated = await Pages.getPageById(c.env.pagecraft_db, pageId);
+    const signedUrl = await getSignedImageUrl({
+      R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
+      R2_SECRET_ACCESS_KEY: (c.env as any).R2_SECRET_ACCESS_KEY,
+      R2_ENDPOINT: (c.env as any).R2_ENDPOINT,
+    }, r2Key);
+
+    return c.json({ ...updated, illustration, imageUrl: signedUrl });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Illustration generation failed"
     return c.json({ error: message }, 500)
