@@ -84,7 +84,15 @@ export async function regeneratePageStory(
   apiKey: string,
   input: StoryRegenInput
 ): Promise<string> {
-  const userPrompt = `I need to rewrite one page of a children's book.
+  const adjacentContext: string[] = []
+  if (input.previousPageStory) {
+    adjacentContext.push(`Previous page story: "${input.previousPageStory}"`)
+  }
+  if (input.nextPageStory) {
+    adjacentContext.push(`Next page story: "${input.nextPageStory}"`)
+  }
+
+  const userPrompt = `I need to rewrite page ${input.pageNumber} of ${input.totalPages} of a children's book.
 
 Book context:
 - Title: ${input.bookContext.title}
@@ -92,10 +100,9 @@ Book context:
 - Synopsis: ${input.bookContext.synopsis}
 
 Current page story: "${input.currentStory}"
+${adjacentContext.length > 0 ? adjacentContext.join("\n") + "\n" : ""}User feedback: "${input.feedback}"
 
-User feedback: "${input.feedback}"
-
-Rewrite the page story based on the feedback. Keep it 2-4 sentences and maintain consistency with the book's characters and style. Return only the rewritten story text.`
+Rewrite the page story based on the feedback. Keep it 2-4 sentences and ensure the story flows naturally from the previous page (if any) into the next page (if any). Maintain consistency with the book's characters and style. Return only the rewritten story text.`
 
   const result = await createInteraction(apiKey, {
     model: MODEL,
