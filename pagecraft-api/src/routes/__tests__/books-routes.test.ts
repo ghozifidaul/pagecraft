@@ -519,6 +519,10 @@ describe("POST /api/books/:id/pages/:pageId/story/regenerate", () => {
         characterDesc: mockBook.character_desc,
         synopsis: mockBook.synopsis,
       },
+      pageNumber: 1,
+      totalPages: 6,
+      previousPageStory: undefined,
+      nextPageStory: undefined,
     })
     expect(vi.mocked(Pages.updatePageStory)).toHaveBeenCalledWith(
       mockEnv.pagecraft_db,

@@ -67,6 +67,30 @@ router.post("/:id/pages/:pageId/story/regenerate", async (c) => {
     );
   }
 
+  let previousPageStory: string | undefined;
+  if (page.page_number > 1) {
+    const prevPage = await Pages.getPageByBookAndNumber(
+      c.env.pagecraft_db,
+      bookId,
+      page.page_number - 1,
+    );
+    if (prevPage?.page_story) {
+      previousPageStory = prevPage.page_story;
+    }
+  }
+
+  let nextPageStory: string | undefined;
+  if (page.page_number < book.page_count) {
+    const nextPage = await Pages.getPageByBookAndNumber(
+      c.env.pagecraft_db,
+      bookId,
+      page.page_number + 1,
+    );
+    if (nextPage?.page_story) {
+      nextPageStory = nextPage.page_story;
+    }
+  }
+
   try {
     const newStory = await regeneratePageStory(apiKey, {
       currentStory: page.page_story,
@@ -76,6 +100,10 @@ router.post("/:id/pages/:pageId/story/regenerate", async (c) => {
         characterDesc: book.character_desc,
         synopsis: book.synopsis,
       },
+      pageNumber: page.page_number,
+      totalPages: book.page_count,
+      previousPageStory,
+      nextPageStory,
     });
 
     await Pages.updatePageStory(c.env.pagecraft_db, pageId, newStory);
