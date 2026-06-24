@@ -8,7 +8,16 @@
     "lib": [
       "ESNext"
     ],
+    "types": [
+      "@cloudflare/workers-types/2023-03-01"
+    ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
   },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/__tests__/**"
+  ]
 }
