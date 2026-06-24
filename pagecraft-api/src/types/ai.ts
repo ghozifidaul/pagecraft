@@ -21,6 +21,10 @@ export interface StoryRegenInput {
     characterDesc: string
     synopsis: string
   }
+  pageNumber: number
+  totalPages: number
+  previousPageStory?: string
+  nextPageStory?: string
 }
 
 export interface IllustrationGenInput {
