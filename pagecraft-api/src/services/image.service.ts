@@ -10,7 +10,7 @@ export async function uploadImage(
   },
   bookId: string,
   pageId: string,
-  imageBuffer: ArrayBuffer
+  imageBuffer: ArrayBuffer,
 ): Promise<string> {
   const key = `books/${bookId}/pages/${pageId}/${Date.now()}.png`;
 
@@ -28,7 +28,7 @@ export async function getSignedImageUrl(
     R2_SECRET_ACCESS_KEY: string;
     R2_ENDPOINT: string;
   },
-  key: string
+  key: string,
 ): Promise<string> {
   const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
   const { GetObjectCommand } = await import("@aws-sdk/client-s3");
