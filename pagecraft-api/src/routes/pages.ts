@@ -198,7 +198,7 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
       r2Key,
     );
 
-    return c.json({ ...updated, illustration, imageUrl: signedUrl });
+    return c.json({ ...updated, imageUrl: signedUrl });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Illustration generation failed";
