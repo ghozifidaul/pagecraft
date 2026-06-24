@@ -2,10 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "pagecraft-api",
   "main": "src/index.ts",
-  "compatibility_date": "2026-06-24"
-  // "compatibility_flags": [
-  //   "nodejs_compat"
-  // ],
+  "compatibility_date": "2026-06-24",
+  "d1_databases": [
+    {
+      "binding": "pagecraft_db",
+      "database_name": "pagecraft-db",
+      "database_id": "0ca6d49e-a874-4527-8b9c-9c05c3f408c1",
+    },
+  ],
+  "compatibility_flags": ["nodejs_compat"],
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
