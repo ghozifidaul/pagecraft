@@ -13,6 +13,7 @@ vi.mock("../../db/pages", () => ({
   getPageById: vi.fn(),
   getPageByBookAndNumber: vi.fn(),
   updatePageStory: vi.fn(),
+  updatePageImageKey: vi.fn(),
   insertPages: vi.fn(),
   getLatestImagePageNumber: vi.fn(),
 }))
@@ -22,9 +23,29 @@ vi.mock("../../services/story.service", () => ({
   regeneratePageStory: vi.fn(),
 }))
 
+vi.mock("../../services/illustration.service", () => ({
+  generatePageIllustration: vi.fn(),
+  regeneratePageIllustration: vi.fn(),
+}))
+
+vi.mock("../../services/image.service", () => ({
+  uploadImage: vi.fn(),
+  getSignedImageUrl: vi.fn(),
+  getImageAsBase64: vi.fn(),
+}))
+
 import * as Books from "../../db/books"
 import * as Pages from "../../db/pages"
 import { generateBookStory, regeneratePageStory } from "../../services/story.service"
+import {
+  generatePageIllustration,
+  regeneratePageIllustration,
+} from "../../services/illustration.service"
+import {
+  uploadImage,
+  getSignedImageUrl,
+  getImageAsBase64,
+} from "../../services/image.service"
 import booksRouter from "../books"
 import pagesRouter from "../pages"
 import type { Book, Page } from "../../types/db"
@@ -66,9 +87,19 @@ const validBookInput = {
   artStyleId: "watercolor",
 }
 
+const mockPageWithImage: Page = {
+  id: "page-2",
+  book_id: "book-1",
+  page_number: 2,
+  page_story: "He faced his fears.",
+  image_r2_key: "books/book-1/pages/page-2/1234567890.png",
+  created_at: "2024-01-01T00:00:00.000Z",
+}
+
 const mockEnv = {
   pagecraft_db: {} as any,
   GEMINI_API_KEY: "test-api-key",
+  IMAGE_BUCKET: {} as any,
 }
 
 beforeEach(() => {
@@ -625,6 +656,374 @@ describe("POST /api/books/:id/pages/:pageId/story/regenerate", () => {
 
     const res = await pagesRouter.request(
       "/book-1/pages/page-1/story/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({ feedback }),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(500)
+    const body = await res.json()
+    expect(body.error).toBe("Content blocked by safety filters")
+  })
+})
+
+describe("POST /api/books/:id/pages/:pageId/illustration", () => {
+  const mockIllustrationData = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  const mockImageUrl = "https://r2.example.com/signed-image"
+  const mockR2Key = "books/book-1/pages/page-1/1234567890.png"
+
+  const mockIllustrationOutput = { data: mockIllustrationData, mimeType: "image/png" }
+
+  beforeEach(() => {
+    vi.mocked(Books.getBookById).mockResolvedValue(mockBook)
+    vi.mocked(Pages.getLatestImagePageNumber).mockResolvedValue(0)
+    vi.mocked(Pages.getPageByBookAndNumber).mockResolvedValue(null)
+    vi.mocked(generatePageIllustration).mockResolvedValue(mockIllustrationOutput)
+    vi.mocked(uploadImage).mockResolvedValue(mockR2Key)
+    vi.mocked(getSignedImageUrl).mockResolvedValue(mockImageUrl)
+  })
+
+  it("returns 200 with imageUrl on successful generation", async () => {
+    vi.mocked(Pages.getPageById)
+      .mockResolvedValueOnce(mockPages[0])
+      .mockResolvedValueOnce({ ...mockPages[0], image_r2_key: mockR2Key })
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-1/illustration",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.imageUrl).toBe(mockImageUrl)
+    expect(body.image_r2_key).toBe(mockR2Key)
+
+    expect(vi.mocked(generatePageIllustration)).toHaveBeenCalledWith("test-api-key", {
+      pageStory: mockPages[0].page_story,
+      characterDesc: mockBook.character_desc,
+      artStyleDescription: "Soft, flowing watercolor paintings with gentle color blends",
+      artStyleImageBase64: undefined,
+      previousPageImage: undefined,
+    })
+    expect(vi.mocked(uploadImage)).toHaveBeenCalled()
+    expect(vi.mocked(Pages.updatePageImageKey)).toHaveBeenCalledWith(
+      mockEnv.pagecraft_db,
+      "page-1",
+      mockR2Key,
+    )
+  })
+
+  it("returns 200 with previous page image reference when page > 1", async () => {
+    vi.mocked(Pages.getPageById)
+      .mockResolvedValueOnce(mockPages[1])
+      .mockResolvedValueOnce({ ...mockPages[1], image_r2_key: mockR2Key })
+    vi.mocked(Pages.getPageByBookAndNumber).mockResolvedValue(mockPages[0])
+    vi.mocked(Pages.getLatestImagePageNumber).mockResolvedValue(1)
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(200)
+    expect(vi.mocked(generatePageIllustration)).toHaveBeenCalledWith("test-api-key", {
+      pageStory: mockPages[1].page_story,
+      characterDesc: mockBook.character_desc,
+      artStyleDescription: "Soft, flowing watercolor paintings with gentle color blends",
+      artStyleImageBase64: undefined,
+      previousPageImage: undefined,
+    })
+  })
+
+  it("returns 404 when book not found", async () => {
+    vi.mocked(Books.getBookById).mockResolvedValue(null)
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-1/illustration",
+      { method: "POST" },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(404)
+    const body = await res.json()
+    expect(body.error).toBe("Book not found")
+  })
+
+  it("returns 404 when page not found", async () => {
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue(null)
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/nonexistent/illustration",
+      { method: "POST" },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(404)
+    const body = await res.json()
+    expect(body.error).toBe("Page not found")
+  })
+
+  it("returns 404 when page does not belong to the book", async () => {
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue({
+      ...mockPages[0],
+      book_id: "other-book",
+    })
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-1/illustration",
+      { method: "POST" },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(404)
+    const body = await res.json()
+    expect(body.error).toBe("Page not found")
+  })
+
+  it("returns 400 when previous page has not been illustrated yet", async () => {
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue(mockPages[1])
+    vi.mocked(Pages.getLatestImagePageNumber).mockResolvedValue(0)
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration",
+      { method: "POST" },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toContain("cannot be generated yet")
+  })
+
+  it("returns 500 when AI generation fails", async () => {
+    vi.mocked(Pages.getPageById)
+      .mockResolvedValueOnce(mockPages[0])
+    vi.mocked(generatePageIllustration).mockRejectedValue(new Error("API rate limit exceeded"))
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-1/illustration",
+      { method: "POST" },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(500)
+    const body = await res.json()
+    expect(body.error).toBe("API rate limit exceeded")
+  })
+})
+
+describe("POST /api/books/:id/pages/:pageId/illustration/regenerate", () => {
+  const feedback = "Make the colors brighter and add more detail"
+  const mockBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  const mockR2Key = "books/book-1/pages/page-2/1234567890.png"
+  const mockImageUrl = "https://r2.example.com/signed-image"
+
+  const mockIllustrationOutput = { data: mockBase64, mimeType: "image/png" }
+
+  beforeEach(() => {
+    vi.mocked(Books.getBookById).mockResolvedValue(mockBook)
+    vi.mocked(getImageAsBase64).mockResolvedValue({ base64: mockBase64, mimeType: "image/png" })
+    vi.mocked(regeneratePageIllustration).mockResolvedValue(mockIllustrationOutput)
+    vi.mocked(uploadImage).mockResolvedValue(mockR2Key)
+    vi.mocked(getSignedImageUrl).mockResolvedValue(mockImageUrl)
+    vi.mocked(Pages.updatePageImageKey).mockResolvedValue(undefined)
+  })
+
+  it("returns 200 with new imageUrl on successful regeneration", async () => {
+    vi.mocked(Pages.getPageById)
+      .mockResolvedValueOnce(mockPageWithImage)
+      .mockResolvedValueOnce({ ...mockPageWithImage, image_r2_key: mockR2Key })
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({ feedback }),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.imageUrl).toBe(mockImageUrl)
+
+    expect(vi.mocked(getImageAsBase64)).toHaveBeenCalledWith(
+      mockEnv.IMAGE_BUCKET,
+      mockPageWithImage.image_r2_key,
+    )
+    expect(vi.mocked(regeneratePageIllustration)).toHaveBeenCalledWith("test-api-key", {
+      pageStory: mockPageWithImage.page_story,
+      characterDesc: mockBook.character_desc,
+      artStyleDescription: "Soft, flowing watercolor paintings with gentle color blends",
+      artStyleImageBase64: undefined,
+      currentPageImageBase64: mockBase64,
+      mimeType: "image/png",
+      feedback,
+    })
+    expect(vi.mocked(Pages.updatePageImageKey)).toHaveBeenCalledWith(
+      mockEnv.pagecraft_db,
+      "page-2",
+      mockR2Key,
+    )
+  })
+
+  it("skips sequential order check (allows regenerating any page)", async () => {
+    vi.mocked(Pages.getPageById)
+      .mockResolvedValueOnce(mockPageWithImage)
+      .mockResolvedValueOnce({ ...mockPageWithImage, image_r2_key: mockR2Key })
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({ feedback }),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(200)
+    expect(vi.mocked(Pages.getLatestImagePageNumber)).not.toHaveBeenCalled()
+  })
+
+  it("returns 404 when book not found", async () => {
+    vi.mocked(Books.getBookById).mockResolvedValue(null)
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({ feedback }),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(404)
+    const body = await res.json()
+    expect(body.error).toBe("Book not found")
+  })
+
+  it("returns 404 when page not found", async () => {
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue(null)
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/nonexistent/illustration/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({ feedback }),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(404)
+    const body = await res.json()
+    expect(body.error).toBe("Page not found")
+  })
+
+  it("returns 404 when page does not belong to the book", async () => {
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue({
+      ...mockPageWithImage,
+      book_id: "other-book",
+    })
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({ feedback }),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(404)
+    const body = await res.json()
+    expect(body.error).toBe("Page not found")
+  })
+
+  it("returns 400 when feedback is empty", async () => {
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue(mockPageWithImage)
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({ feedback: "" }),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe("feedback is required and must be a non-empty string")
+  })
+
+  it("returns 400 when feedback is missing from body", async () => {
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue(mockPageWithImage)
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({}),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe("feedback is required and must be a non-empty string")
+  })
+
+  it("returns 400 when page has no existing illustration", async () => {
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue(mockPages[0])
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-1/illustration/regenerate",
+      {
+        method: "POST",
+        body: JSON.stringify({ feedback }),
+        headers: { "Content-Type": "application/json" },
+      },
+      mockEnv,
+    )
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe("No illustration to regenerate. Generate an illustration first.")
+  })
+
+  it("returns 500 when AI regeneration fails", async () => {
+    vi.mocked(Pages.getPageById)
+      .mockResolvedValueOnce(mockPageWithImage)
+    vi.mocked(regeneratePageIllustration).mockRejectedValue(new Error("Content blocked by safety filters"))
+
+    const res = await pagesRouter.request(
+      "/book-1/pages/page-2/illustration/regenerate",
       {
         method: "POST",
         body: JSON.stringify({ feedback }),
