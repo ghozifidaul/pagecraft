@@ -1,22 +1,75 @@
-import { Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import Card from "../components/ui/Card";
-import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
+import Alert from "../components/ui/Alert";
+import BookCard, { BookCardSkeleton } from "../components/ui/BookCard";
+import ConfirmDialog from "../components/ConfirmDialog";
+import CreateBookDialog from "../components/CreateBookDialog";
+import useBooks from "../hooks/useBooks";
+import {
+  ApiError,
+  deleteBook,
+  getArtStyles,
+  type ArtStyle,
+  type Book,
+  type BookWithPages,
+} from "../lib/api";
 
-type Book = {
-  id: string;
-  title: string;
-  artStyle: string;
-  pageCount: number;
-};
+const SKELETON_KEYS = ["s1", "s2", "s3"] as const;
 
-const placeholderBooks: Book[] = [
-  { id: "1", title: "The Curious Robot", artStyle: "Watercolor", pageCount: 8 },
-  { id: "2", title: "Maya and the Moon", artStyle: "Storybook", pageCount: 12 },
-  { id: "3", title: "Captain Whiskers", artStyle: "Comic", pageCount: 6 },
-];
+function artStyleLabel(styles: ArtStyle[], id: string): string {
+  return styles.find((s) => s.id === id)?.name ?? id;
+}
 
 function BookGallery() {
+  const navigate = useNavigate();
+  const { books, loading, error, fetch } = useBooks();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Book | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [artStyles, setArtStyles] = useState<ArtStyle[]>([]);
+
+  function handleOpen(id: string) {
+    navigate(`/create/${id}`);
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteBook(deleteTarget.id);
+      setDeleteTarget(null);
+      await fetch();
+    } catch (err) {
+      if (err instanceof ApiError) setDeleteError(err.message);
+      else if (err instanceof Error) setDeleteError(err.message);
+      else setDeleteError("Failed to delete book.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function handleCreated(book: BookWithPages) {
+    setCreateOpen(false);
+    fetch();
+    navigate(`/create/${book.id}`);
+  }
+
+  useEffect(() => {
+    const fetchArtStyles = async () => {
+      try {
+        const artstyles = await getArtStyles();
+        setArtStyles(artstyles);
+      } catch (error) {}
+    };
+
+    fetch();
+    fetchArtStyles();
+  }, []);
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
       <header className="flex items-end justify-between flex-wrap gap-4 mb-8">
@@ -28,35 +81,82 @@ function BookGallery() {
             Your Books
           </h1>
         </div>
-        <Link to="/create">
-          <Button variant="primary" size="sm">
-            + New Book
-          </Button>
-        </Link>
+        <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
+          + New Book
+        </Button>
       </header>
 
-      {placeholderBooks.length === 0 ? (
-        <Card>
-          <p className="font-semibold">No books yet. Create your first one!</p>
+      {deleteError && (
+        <Alert
+          variant="error"
+          title="Couldn't delete book"
+          onClose={() => setDeleteError(null)}
+        >
+          {deleteError}
+        </Alert>
+      )}
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {SKELETON_KEYS.map((k) => (
+            <BookCardSkeleton key={k} />
+          ))}
+        </div>
+      ) : error ? (
+        <Alert variant="error" title="Couldn't load books">
+          {error}
+          <div className="mt-3">
+            <Button variant="ghost" size="sm" onClick={fetch}>
+              Try again
+            </Button>
+          </div>
+        </Alert>
+      ) : books.length === 0 ? (
+        <Card featured>
+          <h2 className="text-[22px] font-extrabold mb-2">No books yet</h2>
+          <p className="text-[14.5px] font-medium mb-5">
+            Create your first storybook to get started.
+          </p>
+          <Button variant="dark" onClick={() => setCreateOpen(true)}>
+            Create a Book
+          </Button>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {placeholderBooks.map((book) => (
-            <Card key={book.id}>
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant="blue">{book.artStyle}</Badge>
-                <span className="text-xs text-gray-600 font-medium">
-                  {book.pageCount} pages
-                </span>
-              </div>
-              <h2 className="text-[19px] font-extrabold mb-4">{book.title}</h2>
-              <Button variant="ghost" size="sm">
-                Open
-              </Button>
-            </Card>
+          {books.map((book) => (
+            <BookCard
+              key={book.id}
+              book={book}
+              styleLabel={artStyleLabel(artStyles, book.art_style_id)}
+              onOpen={handleOpen}
+              onDelete={setDeleteTarget}
+            />
           ))}
         </div>
       )}
+
+      <CreateBookDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={handleCreated}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete book?"
+        message={
+          deleteTarget
+            ? `"${deleteTarget.title}" will be permanently deleted. This can't be undone.`
+            : ""
+        }
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          if (deleting) return;
+          setDeleteTarget(null);
+        }}
+        pending={deleting}
+      />
     </main>
   );
 }
