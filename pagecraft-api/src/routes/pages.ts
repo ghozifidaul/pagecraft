@@ -2,8 +2,31 @@ import { Hono } from "hono";
 import * as Books from "../db/books";
 import * as Pages from "../db/pages";
 import { regeneratePageStory } from "../services/story.service";
-import { generatePageIllustration } from "../services/illustration.service";
-import { uploadImage, getSignedImageUrl } from "../services/image.service";
+import { getArtStyleById } from "../db/art-styles";
+import {
+  generatePageIllustration,
+  regeneratePageIllustration,
+} from "../services/illustration.service";
+import {
+  uploadImage,
+  getSignedImageUrl,
+  getImageAsBase64,
+} from "../services/image.service";
+
+async function fetchImageAsBase64(url: string): Promise<string | undefined> {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return undefined;
+    const buffer = await resp.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++)
+      binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  } catch {
+    return undefined;
+  }
+}
 
 const router = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -122,9 +145,6 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
   const apiKey = c.env.GEMINI_API_KEY;
   const bookId = c.req.param("id");
   const pageId = c.req.param("pageId");
-  const body = await c.req
-    .json<{ feedback?: string }>()
-    .catch(() => ({}) as { feedback?: string });
 
   const book = await Books.getBookById(c.env.pagecraft_db, bookId);
   if (!book) {
@@ -162,13 +182,18 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
     }
   }
 
+  const artStyle = getArtStyleById(book.art_style_id);
+  const artStyleImageBase64 = artStyle?.imageUrl
+    ? await fetchImageAsBase64(new URL(artStyle.imageUrl, c.req.url).toString())
+    : undefined;
+
   try {
     const illustration = await generatePageIllustration(apiKey, {
       pageStory: page.page_story,
       characterDesc: book.character_desc,
-      artStyleDescription: book.art_style_id,
+      artStyleDescription: artStyle?.description ?? book.art_style_id,
+      artStyleImageBase64,
       previousPageImage,
-      feedback: body.feedback,
     });
 
     const imageBuffer = Uint8Array.from(atob(illustration.data), (c) =>
@@ -202,6 +227,103 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Illustration generation failed";
+    return c.json({ error: message }, 500);
+  }
+});
+
+router.post("/:id/pages/:pageId/illustration/regenerate", async (c) => {
+  const apiKey = c.env.GEMINI_API_KEY;
+  const bookId = c.req.param("id");
+  const pageId = c.req.param("pageId");
+
+  let body: { feedback: string };
+  try {
+    body = await c.req.json<{ feedback: string }>();
+  } catch {
+    return c.json(
+      { error: "Invalid JSON body. feedback is required and must be a non-empty string." },
+      400,
+    );
+  }
+
+  const book = await Books.getBookById(c.env.pagecraft_db, bookId);
+  if (!book) {
+    return c.json({ error: "Book not found" }, 404);
+  }
+
+  const page = await Pages.getPageById(c.env.pagecraft_db, pageId);
+  if (!page || page.book_id !== bookId) {
+    return c.json({ error: "Page not found" }, 404);
+  }
+
+  if (
+    !body.feedback ||
+    typeof body.feedback !== "string" ||
+    body.feedback.trim().length === 0
+  ) {
+    return c.json(
+      { error: "feedback is required and must be a non-empty string" },
+      400,
+    );
+  }
+
+  if (!page.image_r2_key) {
+    return c.json(
+      {
+        error: "No illustration to regenerate. Generate an illustration first.",
+      },
+      400,
+    );
+  }
+
+  const artStyle = getArtStyleById(book.art_style_id);
+
+  try {
+    const { base64, mimeType } = await getImageAsBase64(
+      c.env.IMAGE_BUCKET,
+      page.image_r2_key,
+    );
+
+    const illustration = await regeneratePageIllustration(apiKey, {
+      pageStory: page.page_story,
+      characterDesc: book.character_desc,
+      artStyleDescription: artStyle?.description ?? book.art_style_id,
+      currentPageImageBase64: base64,
+      mimeType,
+      feedback: body.feedback,
+    });
+
+    const imageBuffer = Uint8Array.from(atob(illustration.data), (c) =>
+      c.charCodeAt(0),
+    ).buffer;
+    const r2Key = await uploadImage(
+      {
+        IMAGE_BUCKET: c.env.IMAGE_BUCKET,
+        R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
+        R2_SECRET_ACCESS_KEY: (c.env as any).R2_SECRET_ACCESS_KEY,
+        R2_ENDPOINT: (c.env as any).R2_ENDPOINT,
+      },
+      bookId,
+      pageId,
+      imageBuffer,
+    );
+
+    await Pages.updatePageImageKey(c.env.pagecraft_db, pageId, r2Key);
+
+    const updated = await Pages.getPageById(c.env.pagecraft_db, pageId);
+    const signedUrl = await getSignedImageUrl(
+      {
+        R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
+        R2_SECRET_ACCESS_KEY: (c.env as any).R2_SECRET_ACCESS_KEY,
+        R2_ENDPOINT: (c.env as any).R2_ENDPOINT,
+      },
+      r2Key,
+    );
+
+    return c.json({ ...updated, imageUrl: signedUrl });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Illustration regeneration failed";
     return c.json({ error: message }, 500);
   }
 });
