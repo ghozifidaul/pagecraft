@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getS3Client } from "../lib/r2";
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -39,11 +40,9 @@ export async function getSignedImageUrl(
   },
   key: string,
 ): Promise<string> {
-  const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
-  const { GetObjectCommand } = await import("@aws-sdk/client-s3");
   const s3Client = getS3Client(env);
   const command = new GetObjectCommand({
-    Bucket: "pagecraft-images", // Should probably be configurable
+    Bucket: "pagecraft-images",
     Key: key,
   });
   return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
