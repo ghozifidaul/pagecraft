@@ -1,13 +1,14 @@
 import { Routes, Route } from "react-router";
 import Home from "./pages/Home";
 import BookGallery from "./pages/BookGallery";
-import BookCreation from "./pages/BookCreation";
+import BookCraft from "./pages/BookCraft";
 
 function App() {
   return (
     <Routes>
       <Route index element={<Home />} />
-      <Route path="create" element={<BookCreation />} />
+      <Route path="create/:bookId" element={<BookCraft />} />
+      <Route path="create" element={<BookCraft />} />
       <Route path="gallery" element={<BookGallery />} />
     </Routes>
   );
