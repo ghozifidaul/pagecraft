@@ -679,6 +679,8 @@ describe("POST /api/books/:id/pages/:pageId/illustration", () => {
 
   beforeEach(() => {
     vi.mocked(Books.getBookById).mockResolvedValue(mockBook)
+    vi.mocked(Pages.getPageById).mockReset()
+    vi.mocked(Pages.getPageById).mockResolvedValue(null as any)
     vi.mocked(Pages.getLatestImagePageNumber).mockResolvedValue(0)
     vi.mocked(Pages.getPageByBookAndNumber).mockResolvedValue(null)
     vi.mocked(generatePageIllustration).mockResolvedValue(mockIllustrationOutput)
@@ -689,7 +691,6 @@ describe("POST /api/books/:id/pages/:pageId/illustration", () => {
   it("returns 200 with imageUrl on successful generation", async () => {
     vi.mocked(Pages.getPageById)
       .mockResolvedValueOnce(mockPages[0])
-      .mockResolvedValueOnce({ ...mockPages[0], image_r2_key: mockR2Key })
 
     const res = await pagesRouter.request(
       "/book-1/pages/page-1/illustration",
@@ -723,7 +724,6 @@ describe("POST /api/books/:id/pages/:pageId/illustration", () => {
   it("returns 200 with previous page image reference when page > 1", async () => {
     vi.mocked(Pages.getPageById)
       .mockResolvedValueOnce(mockPages[1])
-      .mockResolvedValueOnce({ ...mockPages[1], image_r2_key: mockR2Key })
     vi.mocked(Pages.getPageByBookAndNumber).mockResolvedValue(mockPages[0])
     vi.mocked(Pages.getLatestImagePageNumber).mockResolvedValue(1)
 
@@ -846,7 +846,6 @@ describe("POST /api/books/:id/pages/:pageId/illustration/regenerate", () => {
   it("returns 200 with new imageUrl on successful regeneration", async () => {
     vi.mocked(Pages.getPageById)
       .mockResolvedValueOnce(mockPageWithImage)
-      .mockResolvedValueOnce({ ...mockPageWithImage, image_r2_key: mockR2Key })
 
     const res = await pagesRouter.request(
       "/book-1/pages/page-2/illustration/regenerate",
@@ -885,7 +884,6 @@ describe("POST /api/books/:id/pages/:pageId/illustration/regenerate", () => {
   it("skips sequential order check (allows regenerating any page)", async () => {
     vi.mocked(Pages.getPageById)
       .mockResolvedValueOnce(mockPageWithImage)
-      .mockResolvedValueOnce({ ...mockPageWithImage, image_r2_key: mockR2Key })
 
     const res = await pagesRouter.request(
       "/book-1/pages/page-2/illustration/regenerate",
