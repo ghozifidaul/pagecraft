@@ -31,13 +31,15 @@ export default function Alert({
 }: AlertProps) {
   return (
     <div
-      className={`flex items-start gap-3 border-[3px] border-brutal-ink rounded-xl px-[18px] py-4 shadow-[5px_5px_0_#161616] mb-4 ${surfaceStyles[variant]}`}
+      className={`flex items-start gap-3 border-[3px] border-brutal-ink rounded-xl px-4.5 py-4 shadow-[5px_5px_0_#161616] mb-4 ${surfaceStyles[variant]}`}
     >
-      <div className="w-[30px] h-[30px] rounded-lg border-[2.5px] border-brutal-ink flex items-center justify-center font-extrabold bg-brutal-paper flex-shrink-0">
+      <div className="w-7.5 h-7.5 rounded-lg border-[2.5px] border-brutal-ink flex items-center justify-center font-extrabold bg-brutal-paper shrink-0">
         {iconStyles[variant]}
       </div>
       <div>
-        {title && <strong className="block text-[14.5px] mb-0.5">{title}</strong>}
+        {title && (
+          <strong className="block text-[14.5px] mb-0.5">{title}</strong>
+        )}
         <p className="text-[13.5px] text-gray-800 m-0">{children}</p>
       </div>
       {onClose && (

@@ -224,7 +224,7 @@ function CreateBookForm({
                         className="w-full h-full object-cover"
                       />
                       {selected && (
-                        <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full border-[2px] border-brutal-ink bg-brutal-green flex items-center justify-center font-extrabold text-[12px]">
+                        <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full border-2 border-brutal-ink bg-brutal-green flex items-center justify-center font-extrabold text-[12px]">
                           ✓
                         </span>
                       )}

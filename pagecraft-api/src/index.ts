@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import artStylesRouter from "./routes/art-styles";
 import booksRouter from "./routes/books";
 import pagesRouter from "./routes/pages";
+import { env } from "hono/adapter";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
