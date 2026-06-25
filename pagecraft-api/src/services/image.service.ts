@@ -1,6 +1,15 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getS3Client } from "../lib/r2";
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 export async function uploadImage(
   env: {
     IMAGE_BUCKET: R2Bucket;
@@ -38,4 +47,18 @@ export async function getSignedImageUrl(
     Key: key,
   });
   return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+}
+
+export async function getImageAsBase64(
+  bucket: R2Bucket,
+  r2Key: string,
+): Promise<{ base64: string; mimeType: string }> {
+  const object = await bucket.get(r2Key);
+  if (!object) {
+    throw new Error("Image not found in storage");
+  }
+  const buffer = await object.arrayBuffer();
+  const base64 = arrayBufferToBase64(buffer);
+  const mimeType = object.httpMetadata?.contentType ?? "image/png";
+  return { base64, mimeType };
 }
