@@ -1,6 +1,7 @@
 import { createInteraction, extractOutputImage } from "../lib/gemini";
 import type {
   IllustrationGenInput,
+  IllustrationRegenInput,
   IllustrationGenOutput,
   GeminiInputStep,
   GeminiInputContent,
@@ -16,9 +17,17 @@ function buildPrompt(input: IllustrationGenInput): string {
     `Scene description: ${input.pageStory}`,
   ];
 
-  if (input.feedback) {
-    parts.push(`Feedback for revision: ${input.feedback}`);
-  }
+  return parts.join("\n");
+}
+
+function buildRegenPrompt(input: IllustrationRegenInput): string {
+  const parts: string[] = [
+    `Revise the illustration for a children's book page based on feedback.`,
+    `Art style: ${input.artStyleDescription}`,
+    `Character description: ${input.characterDesc}`,
+    `Scene description: ${input.pageStory}`,
+    `Feedback: ${input.feedback}`,
+  ];
 
   return parts.join("\n");
 }
@@ -79,11 +88,48 @@ export async function generatePageIllustration(
 
 export async function regeneratePageIllustration(
   apiKey: string,
-  input: IllustrationGenInput,
+  input: IllustrationRegenInput,
 ): Promise<IllustrationGenOutput> {
-  if (!input.feedback) {
-    throw new Error("Feedback is required for illustration regeneration");
+  const content: GeminiInputContent[] = [];
+
+  if (input.artStyleImageBase64) {
+    content.push({
+      type: "image",
+      data: input.artStyleImageBase64,
+      mime_type: "image/png",
+    });
   }
 
-  return generatePageIllustration(apiKey, input);
+  content.push({
+    type: "image",
+    data: input.currentPageImageBase64,
+    mime_type: input.mimeType,
+  });
+
+  content.push({ type: "text", text: buildRegenPrompt(input) });
+
+  const result = await createInteraction(apiKey, {
+    model: MODEL,
+    input: [{ type: "user_input", content }],
+    generation_config: {
+      temperature: 0.4,
+    },
+    response_format: {
+      type: "image",
+      aspect_ratio: "16:9",
+      image_size: "512",
+    },
+  });
+
+  if (result.status === "failed") {
+    throw new Error(result.error ?? "Illustration regeneration failed");
+  }
+
+  const image = extractOutputImage(result.steps);
+
+  if (!image) {
+    throw new Error("No image returned from illustration regeneration");
+  }
+
+  return image;
 }
