@@ -146,20 +146,19 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
   const bookId = c.req.param("id");
   const pageId = c.req.param("pageId");
 
-  const book = await Books.getBookById(c.env.pagecraft_db, bookId);
+  const [book, page, latestImagePage] = await Promise.all([
+    Books.getBookById(c.env.pagecraft_db, bookId),
+    Pages.getPageById(c.env.pagecraft_db, pageId),
+    Pages.getLatestImagePageNumber(c.env.pagecraft_db, bookId),
+  ]);
+
   if (!book) {
     return c.json({ error: "Book not found" }, 404);
   }
 
-  const page = await Pages.getPageById(c.env.pagecraft_db, pageId);
   if (!page || page.book_id !== bookId) {
     return c.json({ error: "Page not found" }, 404);
   }
-
-  const latestImagePage = await Pages.getLatestImagePageNumber(
-    c.env.pagecraft_db,
-    bookId,
-  );
 
   if (page.page_number > latestImagePage + 1) {
     return c.json(
@@ -170,22 +169,29 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
     );
   }
 
-  let previousPageImage: string | undefined;
-  if (page.page_number > 1) {
-    const prevPage = await Pages.getPageByBookAndNumber(
-      c.env.pagecraft_db,
-      bookId,
-      page.page_number - 1,
-    );
-    if (prevPage?.image_r2_key) {
-      previousPageImage = prevPage.image_r2_key;
-    }
-  }
-
   const artStyle = getArtStyleById(book.art_style_id);
-  const artStyleImageBase64 = artStyle?.imageUrl
-    ? await fetchImageAsBase64(new URL(artStyle.imageUrl, c.req.url).toString())
-    : undefined;
+
+  const [prevPage, artStyleImageBase64] = await Promise.all([
+    page.page_number > 1
+      ? Pages.getPageByBookAndNumber(
+          c.env.pagecraft_db,
+          bookId,
+          page.page_number - 1,
+        )
+      : Promise.resolve(null),
+    artStyle?.imageUrl
+      ? fetchImageAsBase64(new URL(artStyle.imageUrl, c.req.url).toString())
+      : Promise.resolve(undefined),
+  ]);
+
+  let previousPageImage: string | undefined;
+  if (prevPage?.image_r2_key) {
+    const img = await getImageAsBase64(
+      c.env.IMAGE_BUCKET,
+      prevPage.image_r2_key,
+    );
+    previousPageImage = img.base64;
+  }
 
   try {
     const illustration = await generatePageIllustration(apiKey, {
@@ -213,7 +219,6 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
 
     await Pages.updatePageImageKey(c.env.pagecraft_db, pageId, r2Key);
 
-    const updated = await Pages.getPageById(c.env.pagecraft_db, pageId);
     const signedUrl = await getSignedImageUrl(
       {
         R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
@@ -223,7 +228,7 @@ router.post("/:id/pages/:pageId/illustration", async (c) => {
       r2Key,
     );
 
-    return c.json({ ...updated, imageUrl: signedUrl });
+    return c.json({ ...page, image_r2_key: r2Key, imageUrl: signedUrl });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Illustration generation failed";
@@ -246,12 +251,15 @@ router.post("/:id/pages/:pageId/illustration/regenerate", async (c) => {
     );
   }
 
-  const book = await Books.getBookById(c.env.pagecraft_db, bookId);
+  const [book, page] = await Promise.all([
+    Books.getBookById(c.env.pagecraft_db, bookId),
+    Pages.getPageById(c.env.pagecraft_db, pageId),
+  ]);
+
   if (!book) {
     return c.json({ error: "Book not found" }, 404);
   }
 
-  const page = await Pages.getPageById(c.env.pagecraft_db, pageId);
   if (!page || page.book_id !== bookId) {
     return c.json({ error: "Page not found" }, 404);
   }
@@ -310,7 +318,6 @@ router.post("/:id/pages/:pageId/illustration/regenerate", async (c) => {
 
     await Pages.updatePageImageKey(c.env.pagecraft_db, pageId, r2Key);
 
-    const updated = await Pages.getPageById(c.env.pagecraft_db, pageId);
     const signedUrl = await getSignedImageUrl(
       {
         R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
@@ -320,7 +327,7 @@ router.post("/:id/pages/:pageId/illustration/regenerate", async (c) => {
       r2Key,
     );
 
-    return c.json({ ...updated, imageUrl: signedUrl });
+    return c.json({ ...page, image_r2_key: r2Key, imageUrl: signedUrl });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Illustration regeneration failed";
