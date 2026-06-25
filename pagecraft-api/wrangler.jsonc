@@ -14,7 +14,7 @@
     {
       "binding": "IMAGE_BUCKET",
       "bucket_name": "pagecraft-images",
-      "remote": true
+      "remote": true,
     },
   ],
   "compatibility_flags": ["nodejs_compat"],
@@ -22,8 +22,8 @@
     "directory": "public",
   },
   "placement": {
-    "region": "aws:ap-southeast-3"
-  }
+    "region": "aws:ap-southeast-3",
+  },
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
@@ -49,8 +49,8 @@
   // "ai": {
   //   "binding": "AI"
   // },
-  // "observability": {
-  //   "enabled": true,
-  //   "head_sampling_rate": 1
-  // }
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
 }
