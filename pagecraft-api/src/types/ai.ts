@@ -33,7 +33,16 @@ export interface IllustrationGenInput {
   artStyleDescription: string;
   artStyleImageBase64?: string;
   previousPageImage?: string;
-  feedback?: string;
+}
+
+export interface IllustrationRegenInput {
+  pageStory: string;
+  characterDesc: string;
+  artStyleDescription: string;
+  artStyleImageBase64?: string;
+  currentPageImageBase64: string;
+  mimeType: string;
+  feedback: string;
 }
 
 export interface IllustrationGenOutput {
