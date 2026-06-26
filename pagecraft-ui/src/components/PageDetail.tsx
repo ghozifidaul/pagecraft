@@ -96,7 +96,7 @@ function IllustrationPlaceholder({
   const border = dashed ? "border-dashed" : "border-solid";
   return (
     <div
-      className={`w-full aspect-[4/3] rounded-xl border-[3px] ${border} border-brutal-ink flex items-center justify-center bg-gray-50 overflow-hidden`}
+      className={`w-full aspect-video rounded-xl border-[3px] ${border} border-brutal-ink flex items-center justify-center bg-gray-50 overflow-hidden`}
     >
       {children}
     </div>
@@ -160,9 +160,7 @@ export default function PageDetail({
       setStoryFeedbackValue("");
     } catch (err) {
       setStoryError(
-        err instanceof Error
-          ? err.message
-          : "Failed to regenerate story.",
+        err instanceof Error ? err.message : "Failed to regenerate story.",
       );
     } finally {
       setRegeneratingStory(false);
@@ -206,7 +204,7 @@ export default function PageDetail({
 
         {status === "done" && (
           <>
-            <div className="w-full aspect-[4/3] rounded-xl border-[3px] border-brutal-ink shadow-[4px_4px_0_#161616] flex items-center justify-center bg-[#FFFBF2] overflow-hidden">
+            <div className="w-full aspect-[16/9] rounded-xl border-[3px] border-brutal-ink shadow-[4px_4px_0_#161616] flex items-center justify-center bg-[#FFFBF2] overflow-hidden">
               {page.imageUrl ? (
                 <img
                   src={page.imageUrl}
