@@ -21,7 +21,6 @@ function BookCraft() {
   const [artStyleNames, setArtStyleNames] = useState<Record<string, string>>(
     {},
   );
-  const [infoBannerVisible, setInfoBannerVisible] = useState(true);
   const pages = book?.pages ?? [];
 
   const [storyDrafts, setStoryDrafts] = useState<Record<string, string>>({});
@@ -237,32 +236,6 @@ function BookCraft() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 pt-5">
-        {/* Info banner */}
-        {infoBannerVisible && book && !error && (
-          <div className="flex items-start gap-3 border-[3px] border-brutal-ink rounded-xl px-[18px] py-4 shadow-[5px_5px_0_#161616] mb-5 bg-[#E4FBEE]">
-            <div className="w-[30px] h-[30px] rounded-lg border-[2.5px] border-brutal-ink flex items-center justify-center font-extrabold bg-brutal-paper flex-shrink-0">
-              ✓
-            </div>
-            <div>
-              <strong className="block text-[14.5px] mb-0.5">
-                Story generated
-              </strong>
-              <p className="text-[13.5px] text-gray-800 m-0">
-                Review the story on each page below. Once a page reads right,
-                generate its illustration — pages illustrate one at a time, in
-                order.
-              </p>
-            </div>
-            <button
-              onClick={() => setInfoBannerVisible(false)}
-              aria-label="Dismiss"
-              className="ml-auto font-extrabold text-base px-1.5 py-0.5 rounded-md hover:bg-black/10 flex-shrink-0"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
         {/* Error state */}
         {error && (
           <Alert variant="error" title="Couldn't load book">
