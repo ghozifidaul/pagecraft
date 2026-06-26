@@ -317,7 +317,7 @@ function BookCraft() {
                       Character
                     </p>
                     <p className="text-[13.5px] font-semibold leading-snug">
-                      {book.character_desc.length > 50 ? book.character_desc.slice(0, 50) + "…" : book.character_desc}
+                      {book.character_desc.slice(0, 100) + "..."}
                     </p>
                   </div>
                   <div>
@@ -333,7 +333,7 @@ function BookCraft() {
                       Synopsis
                     </p>
                     <p className="text-[13.5px] font-semibold leading-snug">
-                      {book.synopsis.length > 50 ? book.synopsis.slice(0, 50) + "…" : book.synopsis}
+                      {book.synopsis.slice(0, 100) + "..."}
                     </p>
                   </div>
                   <div>
