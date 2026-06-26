@@ -200,51 +200,6 @@ export default function PageDetail({
       </div>
 
       <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-5 sm:p-6 mb-5">
-        <label className="block font-bold text-[13.5px] mb-2">Story text</label>
-        <textarea
-          rows={4}
-          value={storyDraft}
-          onChange={(e) => setStoryDraft(e.target.value)}
-          className="w-full font-medium text-[14.5px] border-[3px] border-brutal-ink rounded-[9px] px-3.5 py-3 bg-brutal-paper shadow-[4px_4px_0_#161616] transition-all duration-150 focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[6px_6px_0_#161616]"
-        />
-        {storyError && (
-          <p className="text-[13px] font-semibold text-brutal-red mt-2">
-            {storyError}
-          </p>
-        )}
-        <div className="flex items-center justify-between flex-wrap gap-2 mt-3">
-          <button
-            onClick={() => setStoryFeedbackOpen((v) => !v)}
-            disabled={saving}
-            className="font-bold text-[13px] px-3.5 py-2 border-[2.5px] border-brutal-ink rounded-lg shadow-[3px_3px_0_#161616] bg-brutal-blue text-white transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#161616] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#161616] disabled:opacity-45 disabled:cursor-not-allowed"
-          >
-            Regenerate with feedback
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!dirty || saving}
-            className={`font-bold text-[13px] px-3.5 py-2 border-[2.5px] border-brutal-ink rounded-lg shadow-[3px_3px_0_#161616] bg-brutal-green transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#161616] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#161616] ${!dirty || saving ? "opacity-45 cursor-not-allowed pointer-events-none" : ""}`}
-          >
-            {saving ? "Saving..." : dirty ? "Save changes" : "Saved"}
-          </button>
-        </div>
-        {storyFeedbackOpen && (
-          <FeedbackBlock
-            title="Regenerate this page's story"
-            placeholder="What should change about this page?"
-            value={storyFeedbackValue}
-            onChange={setStoryFeedbackValue}
-            onSubmit={handleRegenStory}
-            onCancel={() => {
-              setStoryFeedbackOpen(false);
-              setStoryFeedbackValue("");
-            }}
-            loading={regeneratingStory}
-          />
-        )}
-      </div>
-
-      <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-5 sm:p-6">
         <label className="block font-bold text-[13.5px] mb-3">
           Illustration
         </label>
@@ -377,6 +332,51 @@ export default function PageDetail({
           Illustrations generate one page at a time, in order — the next page
           unlocks once this one succeeds.
         </p>
+      </div>
+
+      <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-5 sm:p-6">
+        <label className="block font-bold text-[13.5px] mb-2">Story text</label>
+        <textarea
+          rows={4}
+          value={storyDraft}
+          onChange={(e) => setStoryDraft(e.target.value)}
+          className="w-full font-medium text-[14.5px] border-[3px] border-brutal-ink rounded-[9px] px-3.5 py-3 bg-brutal-paper shadow-[4px_4px_0_#161616] transition-all duration-150 focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[6px_6px_0_#161616]"
+        />
+        {storyError && (
+          <p className="text-[13px] font-semibold text-brutal-red mt-2">
+            {storyError}
+          </p>
+        )}
+        <div className="flex items-center justify-between flex-wrap gap-2 mt-3">
+          <button
+            onClick={() => setStoryFeedbackOpen((v) => !v)}
+            disabled={saving}
+            className="font-bold text-[13px] px-3.5 py-2 border-[2.5px] border-brutal-ink rounded-lg shadow-[3px_3px_0_#161616] bg-brutal-blue text-white transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#161616] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#161616] disabled:opacity-45 disabled:cursor-not-allowed"
+          >
+            Regenerate with feedback
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className={`font-bold text-[13px] px-3.5 py-2 border-[2.5px] border-brutal-ink rounded-lg shadow-[3px_3px_0_#161616] bg-brutal-green transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#161616] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#161616] ${!dirty || saving ? "opacity-45 cursor-not-allowed pointer-events-none" : ""}`}
+          >
+            {saving ? "Saving..." : dirty ? "Save changes" : "Saved"}
+          </button>
+        </div>
+        {storyFeedbackOpen && (
+          <FeedbackBlock
+            title="Regenerate this page's story"
+            placeholder="What should change about this page?"
+            value={storyFeedbackValue}
+            onChange={setStoryFeedbackValue}
+            onSubmit={handleRegenStory}
+            onCancel={() => {
+              setStoryFeedbackOpen(false);
+              setStoryFeedbackValue("");
+            }}
+            loading={regeneratingStory}
+          />
+        )}
       </div>
     </>
   );
