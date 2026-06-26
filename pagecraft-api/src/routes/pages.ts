@@ -60,7 +60,19 @@ router.put("/:id/pages/:pageId/story", async (c) => {
 
   const updated = await Pages.getPageById(c.env.pagecraft_db, pageId);
 
-  return c.json(updated);
+  let imageUrl: string | undefined;
+  if (updated?.image_r2_key) {
+    imageUrl = await getSignedImageUrl(
+      {
+        R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
+        R2_SECRET_ACCESS_KEY: (c.env as any).R2_SECRET_ACCESS_KEY,
+        R2_ENDPOINT: (c.env as any).R2_ENDPOINT,
+      },
+      updated.image_r2_key,
+    );
+  }
+
+  return c.json({ ...updated, imageUrl });
 });
 
 router.post("/:id/pages/:pageId/story/regenerate", async (c) => {
@@ -133,7 +145,19 @@ router.post("/:id/pages/:pageId/story/regenerate", async (c) => {
 
     const updated = await Pages.getPageById(c.env.pagecraft_db, pageId);
 
-    return c.json(updated);
+    let imageUrl: string | undefined;
+    if (updated?.image_r2_key) {
+      imageUrl = await getSignedImageUrl(
+        {
+          R2_ACCESS_KEY_ID: (c.env as any).R2_ACCESS_KEY_ID,
+          R2_SECRET_ACCESS_KEY: (c.env as any).R2_SECRET_ACCESS_KEY,
+          R2_ENDPOINT: (c.env as any).R2_ENDPOINT,
+        },
+        updated.image_r2_key,
+      );
+    }
+
+    return c.json({ ...updated, imageUrl });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Story regeneration failed";
