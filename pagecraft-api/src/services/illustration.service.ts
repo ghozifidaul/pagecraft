@@ -68,7 +68,7 @@ export async function generatePageIllustration(
     },
     response_format: {
       type: "image",
-      aspect_ratio: "4:3",
+      aspect_ratio: "16:9",
       image_size: "512",
     },
   });
@@ -116,7 +116,7 @@ export async function regeneratePageIllustration(
     },
     response_format: {
       type: "image",
-      aspect_ratio: "4:3",
+      aspect_ratio: "16:9",
       image_size: "512",
     },
   });
