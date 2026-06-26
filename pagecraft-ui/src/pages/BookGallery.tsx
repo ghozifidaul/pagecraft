@@ -63,12 +63,12 @@ function BookGallery() {
       try {
         const artstyles = await getArtStyles();
         setArtStyles(artstyles);
-      } catch (error) {}
+      } catch { /* ignore */ }
     };
 
     fetch();
     fetchArtStyles();
-  }, []);
+  }, [fetch]);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
