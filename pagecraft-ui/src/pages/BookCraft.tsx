@@ -204,7 +204,7 @@ function BookCraft() {
     <div className="min-h-screen pb-16">
       {/* Navbar */}
       <header className="px-4 pt-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-3 flex-wrap">
+        <div className="max-w-6xl mx-auto flex items-center gap-3 flex-wrap px-4">
           <button
             onClick={() => navigate("/gallery")}
             className="hidden sm:inline-flex items-center gap-1.5 font-bold text-[13px] border-[2.5px] border-brutal-ink rounded-lg px-3 py-2 shadow-[3px_3px_0_#161616] bg-brutal-paper transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#161616] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#161616]"
