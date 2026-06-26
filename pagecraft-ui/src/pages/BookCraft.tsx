@@ -25,30 +25,12 @@ function BookCraft() {
   );
   const pages = book?.pages ?? [];
 
-  const [storyDrafts, setStoryDrafts] = useState<Record<string, string>>({});
-  const [savingStories, setSavingStories] = useState<Record<string, boolean>>(
-    {},
-  );
-  const [storyErrors, setStoryErrors] = useState<Record<string, string | null>>(
-    {},
-  );
-  const [regeneratingStories, setRegeneratingStories] = useState<
-    Record<string, boolean>
-  >({});
-  const [storyFeedbackOpen, setStoryFeedbackOpen] = useState(false);
-  const [storyFeedbackValue, setStoryFeedbackValue] = useState("");
-
   const [generatingIllus, setGeneratingIllus] = useState<
     Record<string, boolean>
   >({});
   const [illusErrors, setIllusErrors] = useState<Record<string, string | null>>(
     {},
   );
-  const [regeneratingIllus, setRegeneratingIllus] = useState<
-    Record<string, boolean>
-  >({});
-  const [illusFeedbackOpen, setIllusFeedbackOpen] = useState(false);
-  const [illusFeedbackValue, setIllusFeedbackValue] = useState("");
 
   useEffect(() => {
     if (!bookId) {
@@ -74,84 +56,27 @@ function BookCraft() {
 
   const effectivePageId = selectedPageId ?? pages[0]?.id ?? null;
   const selectedPage = pages.find((p) => p.id === effectivePageId) ?? null;
-  const selectedDraft = selectedPageId
-    ? storyDrafts[selectedPageId]
-    : undefined;
-  const currentStoryText =
-    selectedDraft !== undefined
-      ? selectedDraft
-      : (selectedPage?.page_story ?? "");
 
   function selectPage(id: string) {
     setSelectedPageId(id);
-    setStoryFeedbackOpen(false);
-    setIllusFeedbackOpen(false);
   }
 
-  function storyDirty(page: import("../lib/api").Page): boolean {
-    const draft = storyDrafts[page.id];
-    return draft !== undefined && draft !== page.page_story;
+  async function handleSaveStory(
+    pageId: string,
+    text: string,
+  ): Promise<import("../lib/api").Page> {
+    const updated = await updatePageStory(bookId!, pageId, text);
+    patchPage(updated);
+    return updated;
   }
 
-  function clearDraft(pageId: string) {
-    setStoryDrafts((prev) => {
-      const next = { ...prev };
-      delete next[pageId];
-      return next;
-    });
-  }
-
-  async function handleSaveStory(pageId: string) {
-    const page = pages.find((p) => p.id === pageId);
-    if (!page) return;
-    const draft = storyDrafts[pageId];
-    if (draft === undefined || draft === page.page_story) return;
-
-    setSavingStories((prev) => ({ ...prev, [pageId]: true }));
-    setStoryErrors((prev) => ({ ...prev, [pageId]: null }));
-    try {
-      const updated = await updatePageStory(bookId!, pageId, draft);
-      patchPage(updated);
-      clearDraft(pageId);
-    } catch (err) {
-      const msg =
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Failed to save story.";
-      setStoryErrors((prev) => ({ ...prev, [pageId]: msg }));
-    } finally {
-      setSavingStories((prev) => ({ ...prev, [pageId]: false }));
-    }
-  }
-
-  async function handleRegenStory(pageId: string) {
-    if (!storyFeedbackValue.trim()) return;
-
-    setRegeneratingStories((prev) => ({ ...prev, [pageId]: true }));
-    setStoryErrors((prev) => ({ ...prev, [pageId]: null }));
-    try {
-      const updated = await regeneratePageStory(
-        bookId!,
-        pageId,
-        storyFeedbackValue,
-      );
-      patchPage(updated);
-      clearDraft(pageId);
-      setStoryFeedbackOpen(false);
-      setStoryFeedbackValue("");
-    } catch (err) {
-      const msg =
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Failed to regenerate story.";
-      setStoryErrors((prev) => ({ ...prev, [pageId]: msg }));
-    } finally {
-      setRegeneratingStories((prev) => ({ ...prev, [pageId]: false }));
-    }
+  async function handleRegenStory(
+    pageId: string,
+    feedback: string,
+  ): Promise<import("../lib/api").Page> {
+    const updated = await regeneratePageStory(bookId!, pageId, feedback);
+    patchPage(updated);
+    return updated;
   }
 
   async function handleGenerateIllustration(pageId: string) {
@@ -173,20 +98,19 @@ function BookCraft() {
     }
   }
 
-  async function handleRegenIllustration(pageId: string) {
-    if (!illusFeedbackValue.trim()) return;
-
-    setRegeneratingIllus((prev) => ({ ...prev, [pageId]: true }));
+  async function handleRegenIllustration(
+    pageId: string,
+    feedback: string,
+  ): Promise<import("../lib/api").Page> {
     setIllusErrors((prev) => ({ ...prev, [pageId]: null }));
     try {
       const updated = await regeneratePageIllustration(
         bookId!,
         pageId,
-        illusFeedbackValue,
+        feedback,
       );
       patchPage(updated);
-      setIllusFeedbackOpen(false);
-      setIllusFeedbackValue("");
+      return updated;
     } catch (err) {
       const msg =
         err instanceof ApiError
@@ -195,8 +119,7 @@ function BookCraft() {
             ? err.message
             : "Failed to regenerate illustration.";
       setIllusErrors((prev) => ({ ...prev, [pageId]: msg }));
-    } finally {
-      setRegeneratingIllus((prev) => ({ ...prev, [pageId]: false }));
+      throw err;
     }
   }
 
@@ -250,42 +173,20 @@ function BookCraft() {
                   page={selectedPage}
                   totalPages={book.page_count}
                   pages={pages}
-                  storyDraft={currentStoryText}
-                  onStoryChange={(value) => {
-                    if (selectedPageId) {
-                      setStoryDrafts((prev) => ({
-                        ...prev,
-                        [selectedPageId]: value,
-                      }));
-                    }
-                  }}
-                  dirty={selectedPageId ? storyDirty(selectedPage) : false}
-                  saving={savingStories[selectedPage.id] ?? false}
-                  storyError={storyErrors[selectedPage.id] ?? null}
-                  storyFeedbackOpen={storyFeedbackOpen}
-                  storyFeedbackValue={storyFeedbackValue}
-                  onStoryFeedbackChange={setStoryFeedbackValue}
-                  onToggleStoryFeedback={() => setStoryFeedbackOpen((v) => !v)}
-                  onSaveStory={() => handleSaveStory(selectedPage.id)}
-                  regeneratingStory={
-                    regeneratingStories[selectedPage.id] ?? false
-                  }
-                  onRegenStory={() => handleRegenStory(selectedPage.id)}
                   generatingIllustration={
                     generatingIllus[selectedPage.id] ?? false
                   }
                   illustrationError={illusErrors[selectedPage.id] ?? null}
-                  illusFeedbackOpen={illusFeedbackOpen}
-                  illusFeedbackValue={illusFeedbackValue}
-                  onIllusFeedbackChange={setIllusFeedbackValue}
-                  onToggleIllusFeedback={() => setIllusFeedbackOpen((v) => !v)}
                   onGenerateIllustration={() =>
                     handleGenerateIllustration(selectedPage.id)
                   }
-                  regeneratingIllus={
-                    regeneratingIllus[selectedPage.id] ?? false
+                  onSaveStory={(text) => handleSaveStory(selectedPage.id, text)}
+                  onRegenStory={(feedback) =>
+                    handleRegenStory(selectedPage.id, feedback)
                   }
-                  onRegenIllus={() => handleRegenIllustration(selectedPage.id)}
+                  onRegenIllus={(feedback) =>
+                    handleRegenIllustration(selectedPage.id, feedback)
+                  }
                 />
               ) : (
                 <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-6">

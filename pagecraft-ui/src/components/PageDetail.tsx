@@ -1,30 +1,16 @@
+import { useState } from "react";
 import type { Page } from "../lib/api";
 
 type PageDetailProps = {
   page: Page;
   totalPages: number;
   pages: Page[];
-  storyDraft: string;
-  onStoryChange: (value: string) => void;
-  dirty: boolean;
-  saving: boolean;
-  storyError: string | null;
-  storyFeedbackOpen: boolean;
-  storyFeedbackValue: string;
-  onStoryFeedbackChange: (value: string) => void;
-  onToggleStoryFeedback: () => void;
-  onSaveStory: () => void;
-  onRegenStory: () => void;
   generatingIllustration: boolean;
   illustrationError: string | null;
-  illusFeedbackOpen: boolean;
-  illusFeedbackValue: string;
-  onIllusFeedbackChange: (value: string) => void;
-  onToggleIllusFeedback: () => void;
-  onGenerateIllustration: () => void;
-  onRegenIllus: () => void;
-  regeneratingStory?: boolean;
-  regeneratingIllus?: boolean;
+  onGenerateIllustration: () => Promise<void>;
+  onSaveStory: (text: string) => Promise<Page>;
+  onRegenStory: (feedback: string) => Promise<Page>;
+  onRegenIllus: (feedback: string) => Promise<Page>;
 };
 
 type PageStatus = "done" | "generating" | "error" | "locked" | "ready";
@@ -121,28 +107,23 @@ export default function PageDetail({
   page,
   totalPages,
   pages,
-  storyDraft,
-  onStoryChange,
-  dirty,
-  saving,
-  storyError,
-  storyFeedbackOpen,
-  storyFeedbackValue,
-  onStoryFeedbackChange,
-  onToggleStoryFeedback,
-  onSaveStory,
-  onRegenStory,
   generatingIllustration,
   illustrationError,
-  illusFeedbackOpen,
-  illusFeedbackValue,
-  onIllusFeedbackChange,
-  onToggleIllusFeedback,
   onGenerateIllustration,
+  onSaveStory,
+  onRegenStory,
   onRegenIllus,
-  regeneratingStory = false,
-  regeneratingIllus = false,
 }: PageDetailProps) {
+  const [storyDraft, setStoryDraft] = useState(page.page_story);
+  const [saving, setSaving] = useState(false);
+  const [storyError, setStoryError] = useState<string | null>(null);
+  const [regeneratingStory, setRegeneratingStory] = useState(false);
+  const [storyFeedbackOpen, setStoryFeedbackOpen] = useState(false);
+  const [storyFeedbackValue, setStoryFeedbackValue] = useState("");
+  const [regeneratingIllus, setRegeneratingIllus] = useState(false);
+  const [illusFeedbackOpen, setIllusFeedbackOpen] = useState(false);
+  const [illusFeedbackValue, setIllusFeedbackValue] = useState("");
+
   const status = getPageStatus(
     page,
     pages,
@@ -150,6 +131,57 @@ export default function PageDetail({
     illustrationError,
   );
   const meta = STATUS_META[status];
+  const dirty = storyDraft !== page.page_story;
+
+  async function handleSave() {
+    if (!dirty) return;
+    setSaving(true);
+    setStoryError(null);
+    try {
+      const updated = await onSaveStory(storyDraft);
+      setStoryDraft(updated.page_story);
+    } catch (err) {
+      setStoryError(
+        err instanceof Error ? err.message : "Failed to save story.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleRegenStory() {
+    if (!storyFeedbackValue.trim()) return;
+    setRegeneratingStory(true);
+    setStoryError(null);
+    try {
+      const updated = await onRegenStory(storyFeedbackValue);
+      setStoryDraft(updated.page_story);
+      setStoryFeedbackOpen(false);
+      setStoryFeedbackValue("");
+    } catch (err) {
+      setStoryError(
+        err instanceof Error
+          ? err.message
+          : "Failed to regenerate story.",
+      );
+    } finally {
+      setRegeneratingStory(false);
+    }
+  }
+
+  async function handleRegenIllus() {
+    if (!illusFeedbackValue.trim()) return;
+    setRegeneratingIllus(true);
+    try {
+      await onRegenIllus(illusFeedbackValue);
+      setIllusFeedbackOpen(false);
+      setIllusFeedbackValue("");
+    } catch {
+      // error displayed via illustrationError prop
+    } finally {
+      setRegeneratingIllus(false);
+    }
+  }
 
   return (
     <>
@@ -172,7 +204,7 @@ export default function PageDetail({
         <textarea
           rows={4}
           value={storyDraft}
-          onChange={(e) => onStoryChange(e.target.value)}
+          onChange={(e) => setStoryDraft(e.target.value)}
           className="w-full font-medium text-[14.5px] border-[3px] border-brutal-ink rounded-[9px] px-3.5 py-3 bg-brutal-paper shadow-[4px_4px_0_#161616] transition-all duration-150 focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[6px_6px_0_#161616]"
         />
         {storyError && (
@@ -182,14 +214,14 @@ export default function PageDetail({
         )}
         <div className="flex items-center justify-between flex-wrap gap-2 mt-3">
           <button
-            onClick={onToggleStoryFeedback}
+            onClick={() => setStoryFeedbackOpen((v) => !v)}
             disabled={saving}
             className="font-bold text-[13px] px-3.5 py-2 border-[2.5px] border-brutal-ink rounded-lg shadow-[3px_3px_0_#161616] bg-brutal-blue text-white transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#161616] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#161616] disabled:opacity-45 disabled:cursor-not-allowed"
           >
             Regenerate with feedback
           </button>
           <button
-            onClick={onSaveStory}
+            onClick={handleSave}
             disabled={!dirty || saving}
             className={`font-bold text-[13px] px-3.5 py-2 border-[2.5px] border-brutal-ink rounded-lg shadow-[3px_3px_0_#161616] bg-brutal-green transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#161616] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#161616] ${!dirty || saving ? "opacity-45 cursor-not-allowed pointer-events-none" : ""}`}
           >
@@ -201,9 +233,12 @@ export default function PageDetail({
             title="Regenerate this page's story"
             placeholder="What should change about this page?"
             value={storyFeedbackValue}
-            onChange={onStoryFeedbackChange}
-            onSubmit={onRegenStory}
-            onCancel={onToggleStoryFeedback}
+            onChange={setStoryFeedbackValue}
+            onSubmit={handleRegenStory}
+            onCancel={() => {
+              setStoryFeedbackOpen(false);
+              setStoryFeedbackValue("");
+            }}
             loading={regeneratingStory}
           />
         )}
@@ -234,7 +269,7 @@ export default function PageDetail({
                 Generated
               </span>
               <button
-                onClick={onToggleIllusFeedback}
+                onClick={() => setIllusFeedbackOpen((v) => !v)}
                 className="font-bold text-[13px] px-3.5 py-2 border-[2.5px] border-brutal-ink rounded-lg shadow-[3px_3px_0_#161616] bg-brutal-blue text-white transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#161616] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#161616]"
               >
                 Regenerate with feedback
@@ -245,9 +280,12 @@ export default function PageDetail({
                 title="Generate a different illustration"
                 placeholder="What should change about this picture?"
                 value={illusFeedbackValue}
-                onChange={onIllusFeedbackChange}
-                onSubmit={onRegenIllus}
-                onCancel={onToggleIllusFeedback}
+                onChange={setIllusFeedbackValue}
+                onSubmit={handleRegenIllus}
+                onCancel={() => {
+                  setIllusFeedbackOpen(false);
+                  setIllusFeedbackValue("");
+                }}
                 loading={regeneratingIllus}
               />
             )}
