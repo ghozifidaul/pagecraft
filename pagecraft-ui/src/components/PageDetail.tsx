@@ -45,10 +45,7 @@ function getPageStatus(
   return "ready";
 }
 
-const STATUS_META: Record<
-  PageStatus,
-  { label: string; chip: string }
-> = {
+const STATUS_META: Record<PageStatus, { label: string; chip: string }> = {
   done: { label: "Story & art ready", chip: "bg-brutal-green" },
   error: { label: "Illustration failed", chip: "bg-brutal-red text-white" },
   ready: { label: "Ready to illustrate", chip: "bg-brutal-blue text-white" },
@@ -146,14 +143,22 @@ export default function PageDetail({
   regeneratingStory = false,
   regeneratingIllus = false,
 }: PageDetailProps) {
-  const status = getPageStatus(page, pages, generatingIllustration, illustrationError);
+  const status = getPageStatus(
+    page,
+    pages,
+    generatingIllustration,
+    illustrationError,
+  );
   const meta = STATUS_META[status];
 
   return (
     <>
       <div className="flex items-center justify-between mb-4 px-1 flex-wrap gap-2">
         <h2 className="text-[20px] font-extrabold">
-          Page {page.page_number} <span className="text-gray-500 font-semibold text-[15px]">of {totalPages}</span>
+          Page {page.page_number}{" "}
+          <span className="text-gray-500 font-semibold text-[15px]">
+            of {totalPages}
+          </span>
         </h2>
         <span
           className={`inline-flex items-center gap-1.5 font-extrabold text-[12px] tracking-wide px-3 py-1.5 border-2 border-brutal-ink rounded-full shadow-[2px_2px_0_#161616] ${meta.chip}`}
@@ -171,7 +176,9 @@ export default function PageDetail({
           className="w-full font-medium text-[14.5px] border-[3px] border-brutal-ink rounded-[9px] px-3.5 py-3 bg-brutal-paper shadow-[4px_4px_0_#161616] transition-all duration-150 focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[6px_6px_0_#161616]"
         />
         {storyError && (
-          <p className="text-[13px] font-semibold text-brutal-red mt-2">{storyError}</p>
+          <p className="text-[13px] font-semibold text-brutal-red mt-2">
+            {storyError}
+          </p>
         )}
         <div className="flex items-center justify-between flex-wrap gap-2 mt-3">
           <button
@@ -194,16 +201,18 @@ export default function PageDetail({
             title="Regenerate this page's story"
             placeholder="What should change about this page?"
             value={storyFeedbackValue}
-                  onChange={onStoryFeedbackChange}
-                  onSubmit={onRegenStory}
-                  onCancel={onToggleStoryFeedback}
-                  loading={regeneratingStory}
+            onChange={onStoryFeedbackChange}
+            onSubmit={onRegenStory}
+            onCancel={onToggleStoryFeedback}
+            loading={regeneratingStory}
           />
         )}
       </div>
 
       <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-5 sm:p-6">
-        <label className="block font-bold text-[13.5px] mb-3">Illustration</label>
+        <label className="block font-bold text-[13.5px] mb-3">
+          Illustration
+        </label>
 
         {status === "done" && (
           <>
@@ -212,10 +221,12 @@ export default function PageDetail({
                 <img
                   src={page.imageUrl}
                   alt={`Page ${page.page_number} illustration`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full"
                 />
               ) : (
-                <span className="text-sm text-gray-500 font-medium">Image unavailable</span>
+                <span className="text-sm text-gray-500 font-medium">
+                  Image unavailable
+                </span>
               )}
             </div>
             <div className="flex items-center justify-between mt-3 gap-2 flex-wrap">
@@ -246,10 +257,20 @@ export default function PageDetail({
         {status === "generating" && (
           <IllustrationPlaceholder dashed>
             <div className="flex flex-col items-center justify-center gap-2">
-              <svg className="animate-spin" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg
+                className="animate-spin"
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
                 <path d="M12 2a10 10 0 1 0 10 10" />
               </svg>
-              <p className="text-[13px] font-bold text-gray-600">Generating illustration…</p>
+              <p className="text-[13px] font-bold text-gray-600">
+                Generating illustration…
+              </p>
             </div>
           </IllustrationPlaceholder>
         )}
@@ -261,9 +282,12 @@ export default function PageDetail({
                 !
               </div>
               <div>
-                <strong className="block text-[14.5px] mb-0.5">Generation failed</strong>
+                <strong className="block text-[14.5px] mb-0.5">
+                  Generation failed
+                </strong>
                 <p className="text-[13.5px] text-gray-800 m-0">
-                  {illustrationError || "illustration generation failed — try again"}
+                  {illustrationError ||
+                    "illustration generation failed — try again"}
                 </p>
               </div>
             </div>
@@ -281,7 +305,15 @@ export default function PageDetail({
         {status === "locked" && (
           <IllustrationPlaceholder dashed>
             <div className="flex flex-col items-center justify-center gap-2 opacity-70">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-500">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className="text-gray-500"
+              >
                 <rect x="5" y="11" width="14" height="9" rx="1.5" />
                 <path d="M8 11V7a4 4 0 0 1 8 0v4" />
               </svg>
@@ -304,7 +336,8 @@ export default function PageDetail({
         )}
 
         <p className="text-xs text-gray-600 font-medium mt-3">
-          Illustrations generate one page at a time, in order — the next page unlocks once this one succeeds.
+          Illustrations generate one page at a time, in order — the next page
+          unlocks once this one succeeds.
         </p>
       </div>
     </>
