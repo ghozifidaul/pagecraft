@@ -21,80 +21,6 @@ function Sidebar({
 
   return (
     <aside className="h-fit flex flex-col gap-5">
-      {/* Book settings */}
-      <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-4">
-        <div className="flex items-center gap-1.5 mb-3.5 px-1">
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            className="text-gray-600 flex-shrink-0"
-          >
-            <rect x="5" y="11" width="14" height="9" rx="1.5" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-          <p className="text-[12px] font-extrabold tracking-wider uppercase text-gray-600">
-            Book settings
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <div>
-            <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
-              Character
-            </p>
-            <p className="text-[13.5px] font-semibold leading-snug">
-              {book.character_desc.slice(0, 100) + "..."}
-            </p>
-          </div>
-          <div>
-            <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
-              Art style
-            </p>
-            <p className="text-[13.5px] font-semibold">
-              {artStyleNames[book.art_style_id] ?? book.art_style_id}
-            </p>
-          </div>
-          <div>
-            <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
-              Synopsis
-            </p>
-            <p className="text-[13.5px] font-semibold leading-snug">
-              {book.synopsis.slice(0, 100) + "..."}
-            </p>
-          </div>
-          <div>
-            <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
-              Page count
-            </p>
-            <span className="inline-flex items-center gap-1.5 font-extrabold text-[12px] tracking-wide px-3 py-1 border-2 border-brutal-ink rounded-full shadow-[2px_2px_0_#161616] bg-brutal-blue text-white">
-              {book.page_count} pages
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-1.5 mt-4 pt-3.5 border-t-2 border-dashed border-brutal-ink/20">
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            className="text-gray-600 flex-shrink-0 mt-0.5"
-          >
-            <rect x="5" y="11" width="14" height="9" rx="1.5" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-          </svg>
-          <p className="text-[11.5px] text-gray-600 font-medium m-0 leading-snug">
-            Locked once crafting starts.
-          </p>
-        </div>
-      </div>
-
       {/* Page tabs */}
       <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-4">
         <p className="text-[12px] font-extrabold tracking-wider uppercase text-gray-600 mb-3 px-1">
@@ -205,6 +131,80 @@ function Sidebar({
             );
           })}
         </nav>
+      </div>
+
+      {/* Book settings */}
+      <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-4">
+        <div className="flex items-center gap-1.5 mb-3.5 px-1">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            className="text-gray-600 flex-shrink-0"
+          >
+            <rect x="5" y="11" width="14" height="9" rx="1.5" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+          <p className="text-[12px] font-extrabold tracking-wider uppercase text-gray-600">
+            Book settings
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
+              Character
+            </p>
+            <p className="text-[13.5px] font-semibold leading-snug">
+              {book.character_desc.slice(0, 100) + "..."}
+            </p>
+          </div>
+          <div>
+            <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
+              Art style
+            </p>
+            <p className="text-[13.5px] font-semibold">
+              {artStyleNames[book.art_style_id] ?? book.art_style_id}
+            </p>
+          </div>
+          <div>
+            <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
+              Synopsis
+            </p>
+            <p className="text-[13.5px] font-semibold leading-snug">
+              {book.synopsis.slice(0, 100) + "..."}
+            </p>
+          </div>
+          <div>
+            <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
+              Page count
+            </p>
+            <span className="inline-flex items-center gap-1.5 font-extrabold text-[12px] tracking-wide px-3 py-1 border-2 border-brutal-ink rounded-full shadow-[2px_2px_0_#161616] bg-brutal-blue text-white">
+              {book.page_count} pages
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-1.5 mt-4 pt-3.5 border-t-2 border-dashed border-brutal-ink/20">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            className="text-gray-600 flex-shrink-0 mt-0.5"
+          >
+            <rect x="5" y="11" width="14" height="9" rx="1.5" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          </svg>
+          <p className="text-[11.5px] text-gray-600 font-medium m-0 leading-snug">
+            Locked once crafting starts.
+          </p>
+        </div>
       </div>
     </aside>
   );
