@@ -9,7 +9,7 @@ function BookCraftHeader({ loading, title }: BookCraftHeaderProps) {
   const navigate = useNavigate();
 
   return (
-    <header className="px-4 pt-4">
+    <header className="sticky top-0 z-10 bg-brutal-paper px-4 py-4">
       <div className="max-w-6xl mx-auto flex items-center gap-3 flex-wrap px-4">
         <button
           onClick={() => navigate("/gallery")}
