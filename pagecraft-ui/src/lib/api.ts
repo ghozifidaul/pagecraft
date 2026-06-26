@@ -92,3 +92,50 @@ export function createBook(input: CreateBookInput): Promise<BookWithPages> {
 export function deleteBook(id: string): Promise<void> {
   return request<void>(`/api/books/${id}`, { method: "DELETE" });
 }
+
+export function getBook(id: string): Promise<BookWithPages> {
+  return request<BookWithPages>(`/api/books/${id}`);
+}
+
+export function updatePageStory(
+  bookId: string,
+  pageId: string,
+  story: string,
+): Promise<Page> {
+  return request<Page>(`/api/books/${bookId}/pages/${pageId}/story`, {
+    method: "PUT",
+    body: JSON.stringify({ story }),
+  });
+}
+
+export function regeneratePageStory(
+  bookId: string,
+  pageId: string,
+  feedback: string,
+): Promise<Page> {
+  return request<Page>(
+    `/api/books/${bookId}/pages/${pageId}/story/regenerate`,
+    { method: "POST", body: JSON.stringify({ feedback }) },
+  );
+}
+
+export function generatePageIllustration(
+  bookId: string,
+  pageId: string,
+): Promise<Page> {
+  return request<Page>(
+    `/api/books/${bookId}/pages/${pageId}/illustration`,
+    { method: "POST" },
+  );
+}
+
+export function regeneratePageIllustration(
+  bookId: string,
+  pageId: string,
+  feedback: string,
+): Promise<Page> {
+  return request<Page>(
+    `/api/books/${bookId}/pages/${pageId}/illustration/regenerate`,
+    { method: "POST", body: JSON.stringify({ feedback }) },
+  );
+}
