@@ -20,7 +20,7 @@ function Sidebar({
   const pages = book.pages ?? [];
 
   return (
-    <aside className="lg:sticky lg:top-5 h-fit flex flex-col gap-5">
+    <aside className="h-fit flex flex-col gap-5">
       {/* Book settings */}
       <div className="bg-brutal-paper border-[3px] border-brutal-ink rounded-2xl shadow-[8px_8px_0_#161616] p-4">
         <div className="flex items-center gap-1.5 mb-3.5 px-1">
