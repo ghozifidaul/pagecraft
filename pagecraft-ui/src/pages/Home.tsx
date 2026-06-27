@@ -22,10 +22,7 @@ function Home() {
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Link to="/gallery">
-            <Button variant="primary">Create a Book</Button>
-          </Link>
-          <Link to="/gallery">
-            <Button variant="ghost">Browse Gallery</Button>
+            <Button variant="ghost">Get Started</Button>
           </Link>
         </div>
       </section>
