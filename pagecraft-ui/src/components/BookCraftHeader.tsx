@@ -27,7 +27,7 @@ function BookCraftHeader({ loading, title }: BookCraftHeaderProps) {
           </svg>
           Gallery
         </button>
-        <div className="w-10 h-10 flex-shrink-0 rounded-lg border-[2.5px] border-brutal-ink shadow-[2px_2px_0_#161616] bg-brutal-yellow flex items-center justify-center font-extrabold text-[13px]">
+        <div className="w-10 h-10 shrink-0 rounded-lg border-[2.5px] border-brutal-ink shadow-[2px_2px_0_#161616] bg-brutal-yellow flex items-center justify-center font-extrabold text-[13px]">
           PC
         </div>
         <div className="min-w-0">

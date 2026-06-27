@@ -204,7 +204,7 @@ export default function PageDetail({
 
         {status === "done" && (
           <>
-            <div className="w-full aspect-[16/9] rounded-xl border-[3px] border-brutal-ink shadow-[4px_4px_0_#161616] flex items-center justify-center bg-[#FFFBF2] overflow-hidden">
+            <div className="w-full aspect-video rounded-xl border-[3px] border-brutal-ink shadow-[4px_4px_0_#161616] flex items-center justify-center bg-brutal-paper overflow-hidden">
               {page.imageUrl ? (
                 <img
                   src={page.imageUrl}
@@ -268,8 +268,8 @@ export default function PageDetail({
 
         {status === "error" && (
           <>
-            <div className="flex items-start gap-3 border-[3px] border-brutal-ink rounded-xl px-[18px] py-4 shadow-[5px_5px_0_#161616] mb-3 bg-[#FFE7E7]">
-              <div className="w-[30px] h-[30px] rounded-lg border-[2.5px] border-brutal-ink flex items-center justify-center font-extrabold bg-brutal-paper flex-shrink-0">
+            <div className="flex items-start gap-3 border-[3px] border-brutal-ink rounded-xl px-4.5 py-4 shadow-[5px_5px_0_#161616] mb-3 bg-[#FFE7E7]">
+              <div className="w-7.5 h-7.5 rounded-lg border-[2.5px] border-brutal-ink flex items-center justify-center font-extrabold bg-brutal-paper shrink-0">
                 !
               </div>
               <div>
