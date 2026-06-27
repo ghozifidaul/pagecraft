@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { BookWithPages } from "../lib/api";
 
 type SidebarProps = {
@@ -18,6 +19,8 @@ function Sidebar({
   onSelectPage,
 }: SidebarProps) {
   const pages = book.pages ?? [];
+  const [charExpanded, setCharExpanded] = useState(false);
+  const [synopsisExpanded, setSynopsisExpanded] = useState(false);
 
   return (
     <aside className="h-fit flex flex-col gap-5">
@@ -159,8 +162,18 @@ function Sidebar({
               Character
             </p>
             <p className="text-[13.5px] font-semibold leading-snug">
-              {book.character_desc.slice(0, 100) + "..."}
+              {charExpanded || book.character_desc.length <= 100
+                ? book.character_desc
+                : book.character_desc.slice(0, 100) + "..."}
             </p>
+            {book.character_desc.length > 100 && (
+              <button
+                onClick={() => setCharExpanded((v) => !v)}
+                className="mt-0.5 text-[12px] font-bold text-brutal-blue underline cursor-pointer"
+              >
+                {charExpanded ? "Show less" : "Show more"}
+              </button>
+            )}
           </div>
           <div>
             <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
@@ -175,8 +188,18 @@ function Sidebar({
               Synopsis
             </p>
             <p className="text-[13.5px] font-semibold leading-snug">
-              {book.synopsis.slice(0, 100) + "..."}
+              {synopsisExpanded || book.synopsis.length <= 100
+                ? book.synopsis
+                : book.synopsis.slice(0, 100) + "..."}
             </p>
+            {book.synopsis.length > 100 && (
+              <button
+                onClick={() => setSynopsisExpanded((v) => !v)}
+                className="mt-0.5 text-[12px] font-bold text-brutal-blue underline cursor-pointer"
+              >
+                {synopsisExpanded ? "Show less" : "Show more"}
+              </button>
+            )}
           </div>
           <div>
             <p className="text-[11px] font-extrabold tracking-wider uppercase text-gray-500 mb-1">
