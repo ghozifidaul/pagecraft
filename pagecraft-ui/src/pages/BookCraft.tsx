@@ -33,6 +33,12 @@ function BookCraft() {
   );
 
   useEffect(() => {
+    document.title = book?.title
+      ? `${book.title} — PageCraft`
+      : "Create a Book — PageCraft";
+  }, [book?.title]);
+
+  useEffect(() => {
     if (!bookId) {
       navigate("/gallery", { replace: true });
     }

@@ -1,8 +1,12 @@
+import { useEffect } from "react";
 import { Link } from "react-router";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 
 function Home() {
+  useEffect(() => {
+    document.title = "PageCraft — AI Children's Book Generator";
+  }, []);
   return (
     <main className="relative min-h-screen overflow-hidden">
       <div

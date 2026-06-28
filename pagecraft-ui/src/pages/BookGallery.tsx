@@ -23,6 +23,9 @@ function artStyleLabel(styles: ArtStyle[], id: string): string {
 }
 
 function BookGallery() {
+  useEffect(() => {
+    document.title = "My Books — PageCraft";
+  }, []);
   const navigate = useNavigate();
   const { books, loading, error, fetch } = useBooks();
   const [createOpen, setCreateOpen] = useState(false);
