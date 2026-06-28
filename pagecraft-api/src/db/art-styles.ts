@@ -20,12 +20,6 @@ const ART_STYLES: ArtStyle[] = [
     imageUrl: "/art-styles/cartoon.jpg",
   },
   {
-    id: "sketch",
-    name: "Pencil Sketch",
-    description: "Hand-drawn pencil sketch style illustrations",
-    imageUrl: "/art-styles/sketch.jpg",
-  },
-  {
     id: "paper-cutout",
     name: "Paper Cutout",
     description: "Layered paper cutout style with textured backgrounds",
