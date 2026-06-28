@@ -22,10 +22,10 @@ Generate personalized children's books with AI stories and illustrations. A Reac
 
 The project has **two independent packages** (no monorepo workspace):
 
-| Package | Stack | Runs on |
-|---------|-------|---------|
-| `pagecraft-api/` | Hono + Cloudflare Workers | `localhost:8787` |
-| `pagecraft-ui/` | Vite + React 19 + Tailwind v4 | `localhost:5173` |
+| Package          | Stack                         | Runs on          |
+| ---------------- | ----------------------------- | ---------------- |
+| `pagecraft-api/` | Hono + Cloudflare Workers     | `localhost:8787` |
+| `pagecraft-ui/`  | Vite + React 19 + Tailwind v4 | `localhost:5173` |
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@ The project has **two independent packages** (no monorepo workspace):
   ```bash
   npm install -g wrangler
   ```
-- A [Gemini API key](https://aistudio.google.com/apikey) (free tier works)
+- A [Gemini API key](https://aistudio.google.com/apikey) (free tier works for story generation but only paid tier works for illustration generation)
 
 ## Quick Start
 
@@ -74,13 +74,13 @@ This creates a local SQLite database at `.wrangler/state/v3/d1/` and applies the
 cp .env.example .env
 ```
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `GEMINI_API_KEY` | Yes | — | Gemini API key for AI generation |
-| `FRONTEND_URL` | Yes | `http://localhost:5173` | CORS allowed origin |
-| `R2_ENDPOINT` | No* | — | R2 S3-compatible endpoint |
-| `R2_ACCESS_KEY_ID` | No* | — | R2 access key |
-| `R2_SECRET_ACCESS_KEY` | No* | — | R2 secret key |
+| Variable               | Required | Default                 | Description                      |
+| ---------------------- | -------- | ----------------------- | -------------------------------- |
+| `GEMINI_API_KEY`       | Yes      | —                       | Gemini API key for AI generation |
+| `FRONTEND_URL`         | Yes      | `http://localhost:5173` | CORS allowed origin              |
+| `R2_ENDPOINT`          | No\*     | —                       | R2 S3-compatible endpoint        |
+| `R2_ACCESS_KEY_ID`     | No\*     | —                       | R2 access key                    |
+| `R2_SECRET_ACCESS_KEY` | No\*     | —                       | R2 secret key                    |
 
 \* R2 vars are only needed for illustration generation. The app works without them for book creation and story editing.
 
@@ -91,9 +91,9 @@ cd ../pagecraft-ui
 cp .env.example .env
 ```
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `VITE_API_BASE_URL` | Yes | `http://localhost:8787` | API base URL |
+| Variable            | Required | Default                 | Description  |
+| ------------------- | -------- | ----------------------- | ------------ |
+| `VITE_API_BASE_URL` | Yes      | `http://localhost:8787` | API base URL |
 
 ### 5. Start the API
 
@@ -131,23 +131,23 @@ Visit **http://localhost:5173** in your browser.
 
 ### pagecraft-api
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Wrangler dev server (`:8787`) |
-| `npm run deploy` | Deploy to Cloudflare Workers (`--minify`) |
-| `npm run cf-typegen` | Regenerate `worker-configuration.d.ts` (run after editing `wrangler.jsonc`) |
-| `npm run test` | Run unit tests only |
-| `npm run test:integration` | Run integration tests (needs `GEMINI_API_KEY` in `.env`) |
-| `npm run test:all` | Run all test suites |
+| Command                    | Description                                                                 |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `npm run dev`              | Start Wrangler dev server (`:8787`)                                         |
+| `npm run deploy`           | Deploy to Cloudflare Workers (`--minify`)                                   |
+| `npm run cf-typegen`       | Regenerate `worker-configuration.d.ts` (run after editing `wrangler.jsonc`) |
+| `npm run test`             | Run unit tests only                                                         |
+| `npm run test:integration` | Run integration tests (needs `GEMINI_API_KEY` in `.env`)                    |
+| `npm run test:all`         | Run all test suites                                                         |
 
 ### pagecraft-ui
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite dev server (`:5173`) |
-| `npm run build` | Type-check + production build (`tsc -b && vite build`) |
-| `npm run lint` | Run ESLint across the codebase |
-| `npm run preview` | Preview production build |
+| Command           | Description                                            |
+| ----------------- | ------------------------------------------------------ |
+| `npm run dev`     | Start Vite dev server (`:5173`)                        |
+| `npm run build`   | Type-check + production build (`tsc -b && vite build`) |
+| `npm run lint`    | Run ESLint across the codebase                         |
+| `npm run preview` | Preview production build                               |
 
 ---
 
@@ -179,32 +179,32 @@ pagecraft-ui/           # Vite + React 19
 
 ## API Routes
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/art-styles` | List art presets |
-| GET | `/api/books` | List all books |
-| POST | `/api/books` | Create book + generate story |
-| GET | `/api/books/:id` | Get book with pages |
-| DELETE | `/api/books/:id` | Delete book (cascades pages + R2 images) |
-| PUT | `/api/books/:id/pages/:pageId/story` | Manual story edit |
-| POST | `/api/books/:id/pages/:pageId/story/regenerate` | AI story regen with feedback |
-| POST | `/api/books/:id/pages/:pageId/illustration` | Generate illustration (sequential order) |
-| POST | `/api/books/:id/pages/:pageId/illustration/regenerate` | Regen illustration with feedback |
+| Method | Path                                                   | Description                              |
+| ------ | ------------------------------------------------------ | ---------------------------------------- |
+| GET    | `/api/art-styles`                                      | List art presets                         |
+| GET    | `/api/books`                                           | List all books                           |
+| POST   | `/api/books`                                           | Create book + generate story             |
+| GET    | `/api/books/:id`                                       | Get book with pages                      |
+| DELETE | `/api/books/:id`                                       | Delete book (cascades pages + R2 images) |
+| PUT    | `/api/books/:id/pages/:pageId/story`                   | Manual story edit                        |
+| POST   | `/api/books/:id/pages/:pageId/story/regenerate`        | AI story regen with feedback             |
+| POST   | `/api/books/:id/pages/:pageId/illustration`            | Generate illustration (sequential order) |
+| POST   | `/api/books/:id/pages/:pageId/illustration/regenerate` | Regen illustration with feedback         |
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---------|-------------|-----|
-| `wrangler: command not found` | Wrangler not installed globally | `npm install -g wrangler` |
-| `✘ [ERROR] Could not find ... pagecraft-db` | D1 database not created | Run `npx wrangler d1 migrations apply pagecraft-db --local` |
-| `SQLITE_ERROR: no such table: books` | Migrations not applied | Same as above — ensure step 3 was run |
-| CORS error in browser console | `FRONTEND_URL` mismatch | Set `FRONTEND_URL=http://localhost:5173` in `pagecraft-api/.env` |
-| `401 Unauthorized` from Gemini | Missing or invalid API key | Check `GEMINI_API_KEY` in `pagecraft-api/.env` |
-| Illustration generation fails silently | R2 credentials not configured | Set `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` in `pagecraft-api/.env` |
-| `Cannot GET /` | API server not running | Ensure `npm run dev` is running in `pagecraft-api/` |
-| UI shows blank page | Vite not proxying correctly | Verify `VITE_API_BASE_URL` in `pagecraft-ui/.env` is `http://localhost:8787` |
+| Symptom                                     | Likely cause                    | Fix                                                                                   |
+| ------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
+| `wrangler: command not found`               | Wrangler not installed globally | `npm install -g wrangler`                                                             |
+| `✘ [ERROR] Could not find ... pagecraft-db` | D1 database not created         | Run `npx wrangler d1 migrations apply pagecraft-db --local`                           |
+| `SQLITE_ERROR: no such table: books`        | Migrations not applied          | Same as above — ensure step 3 was run                                                 |
+| CORS error in browser console               | `FRONTEND_URL` mismatch         | Set `FRONTEND_URL=http://localhost:5173` in `pagecraft-api/.env`                      |
+| `401 Unauthorized` from Gemini              | Missing or invalid API key      | Check `GEMINI_API_KEY` in `pagecraft-api/.env`                                        |
+| Illustration generation fails silently      | R2 credentials not configured   | Set `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` in `pagecraft-api/.env` |
+| `Cannot GET /`                              | API server not running          | Ensure `npm run dev` is running in `pagecraft-api/`                                   |
+| UI shows blank page                         | Vite not proxying correctly     | Verify `VITE_API_BASE_URL` in `pagecraft-ui/.env` is `http://localhost:8787`          |
 
 ---
 
@@ -232,4 +232,4 @@ Then update `wrangler.jsonc` with your D1 database ID and run `npm run cf-typege
 
 ---
 
-*No authentication — intentionally anonymous.*
+_No authentication — intentionally anonymous._
