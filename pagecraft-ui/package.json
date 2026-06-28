@@ -2,6 +2,20 @@
   "name": "pagecraft-ui",
   "private": true,
   "version": "0.0.0",
+  "description": "AI-powered children's book generator with personalized stories and illustrations",
+  "author": "",
+  "homepage": "https://github.com/ghozi/pagecraft",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ghozi/pagecraft.git"
+  },
+  "keywords": [
+    "childrens-books",
+    "ai-storytelling",
+    "illustration",
+    "cloudflare",
+    "react"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
