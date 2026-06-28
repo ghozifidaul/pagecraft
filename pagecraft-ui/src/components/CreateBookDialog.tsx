@@ -204,7 +204,7 @@ function CreateBookForm({
               Loading styles...
             </p>
           ) : (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {artStyles.map((style) => {
                 const selected = artStyleId === style.id;
                 return (
@@ -217,7 +217,7 @@ function CreateBookForm({
                       selected ? "border-brutal-green" : "border-brutal-ink"
                     }`}
                   >
-                    <div className="aspect-square bg-brutal-ink/10 relative">
+                    <div className="aspect-video bg-brutal-ink/10 relative">
                       <img
                         src={style.imageUrl}
                         alt={style.name}
