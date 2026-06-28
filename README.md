@@ -55,16 +55,26 @@ cd ../pagecraft-ui
 npm install
 ```
 
-### 3. Set up the local database
+### 3. Set up the database
+
+Create the database in your Cloudflare account (this registers the database metadata that Wrangler needs):
 
 ```bash
 cd ../pagecraft-api
+npx wrangler d1 create pagecraft-db
+```
+
+Save the returned database UUID — you'll need it for deployment. The ID in `wrangler.jsonc` is pre-filled as a placeholder.
+
+Then apply the schema to your **local** SQLite database:
+
+```bash
 npx wrangler d1 migrations apply pagecraft-db --local
 ```
 
-This creates a local SQLite database at `.wrangler/state/v3/d1/` and applies the schema (`migrations/0001_create_books_and_pages.sql`).
+This creates a local SQLite database at `.wrangler/state/v3/d1/` and runs the migration (`migrations/0001_create_books_and_pages.sql`).
 
-> **No Cloudflare account needed** — local D1 runs entirely on your machine.
+> After the initial `wrangler d1 create` step, all local development runs entirely on your machine. No ongoing Cloudflare account needed.
 
 ### 4. Configure environment
 
@@ -198,8 +208,8 @@ pagecraft-ui/           # Vite + React 19
 | Symptom                                     | Likely cause                    | Fix                                                                                   |
 | ------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
 | `wrangler: command not found`               | Wrangler not installed globally | `npm install -g wrangler`                                                             |
-| `✘ [ERROR] Could not find ... pagecraft-db` | D1 database not created         | Run `npx wrangler d1 migrations apply pagecraft-db --local`                           |
-| `SQLITE_ERROR: no such table: books`        | Migrations not applied          | Same as above — ensure step 3 was run                                                 |
+| `✘ [ERROR] Could not find ... pagecraft-db` | D1 database not created         | Run `npx wrangler d1 create pagecraft-db` first (step 3a)                             |
+| `SQLITE_ERROR: no such table: books`        | Migrations not applied          | Run `npx wrangler d1 migrations apply pagecraft-db --local` — ensure step 3b was run  |
 | CORS error in browser console               | `FRONTEND_URL` mismatch         | Set `FRONTEND_URL=http://localhost:5173` in `pagecraft-api/.env`                      |
 | `401 Unauthorized` from Gemini              | Missing or invalid API key      | Check `GEMINI_API_KEY` in `pagecraft-api/.env`                                        |
 | Illustration generation fails silently      | R2 credentials not configured   | Set `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` in `pagecraft-api/.env` |
