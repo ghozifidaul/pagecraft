@@ -31,113 +31,67 @@ The project has **two independent packages** (no monorepo workspace):
 
 - [Node.js](https://nodejs.org/) >= 20 (LTS recommended)
 - npm (ships with Node.js)
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) installed globally:
-  ```bash
-  npm install -g wrangler
-  ```
 - A [Gemini API key](https://aistudio.google.com/apikey) (free tier works for story generation but only paid tier works for illustration generation)
 
 ## Quick Start
 
-Estimated time: **~12 minutes**.
+Estimated time: **~6 minutes**.
 
-### 1. Install API dependencies
-
-```bash
-cd pagecraft-api
-npm install
-```
-
-### 2. Install UI dependencies
+### 1. Install dependencies
 
 ```bash
-cd ../pagecraft-ui
-npm install
+make install
 ```
 
-### 3. Set up the database
-
-Create the database in your Cloudflare account (this registers the database metadata that Wrangler needs):
+Or without Make:
 
 ```bash
-cd ../pagecraft-api
-npx wrangler d1 create pagecraft-db
+npm --prefix pagecraft-api install && npm --prefix pagecraft-ui install
 ```
 
-Save the returned database UUID — you'll need it for deployment. The ID in `wrangler.jsonc` is pre-filled as a placeholder.
-
-Then apply the schema to your **local** SQLite database:
+### 2. Configure environment + database
 
 ```bash
-npx wrangler d1 migrations apply pagecraft-db --local
+make setup
 ```
 
-This creates a local SQLite database at `.wrangler/state/v3/d1/` and runs the migration (`migrations/0001_create_books_and_pages.sql`).
+This copies `.env.example` → `.env` for both packages (won't overwrite existing) and applies D1 migrations to your local SQLite database. **No Cloudflare login required** for local development.
 
-> After the initial `wrangler d1 create` step, all local development runs entirely on your machine. No ongoing Cloudflare account needed.
+> Set `GEMINI_API_KEY` in `pagecraft-api/.env` — it's the only required variable for local development.
 
-### 4. Configure environment
-
-**API** — copy and fill the template:
+### 3. Start development
 
 ```bash
-cp .env.example .env
+make dev
 ```
 
-| Variable               | Required | Default                 | Description                      |
-| ---------------------- | -------- | ----------------------- | -------------------------------- |
-| `GEMINI_API_KEY`       | Yes      | —                       | Gemini API key for AI generation |
-| `FRONTEND_URL`         | Yes      | `http://localhost:5173` | CORS allowed origin              |
-| `R2_ENDPOINT`          | No\*     | —                       | R2 S3-compatible endpoint        |
-| `R2_ACCESS_KEY_ID`     | No\*     | —                       | R2 access key                    |
-| `R2_SECRET_ACCESS_KEY` | No\*     | —                       | R2 secret key                    |
+Starts the API (`localhost:8787`) and UI (`localhost:5173`) in a single terminal. Press `Ctrl+C` to stop both.
 
-\* R2 vars are only needed for illustration generation. The app works without them for book creation and story editing.
-
-**UI** — copy and fill the template:
+Or start them separately in two terminals:
 
 ```bash
-cd ../pagecraft-ui
-cp .env.example .env
+npm --prefix pagecraft-api run dev   # Terminal 1 — API on :8787
+npm --prefix pagecraft-ui run dev    # Terminal 2 — UI on :5173
 ```
 
-| Variable            | Required | Default                 | Description  |
-| ------------------- | -------- | ----------------------- | ------------ |
-| `VITE_API_BASE_URL` | Yes      | `http://localhost:8787` | API base URL |
-
-### 5. Start the API
-
-Open **Terminal 1**:
-
-```bash
-cd pagecraft-api
-npm run dev
-```
-
-The API starts at `http://localhost:8787`. Verify it works:
-
-```bash
-curl http://localhost:8787/api/art-styles
-```
-
-### 6. Start the UI
-
-Open **Terminal 2**:
-
-```bash
-cd pagecraft-ui
-npm run dev
-```
-
-The UI starts at `http://localhost:5173`. Vite proxies `/api` and `/art-styles` requests to the API.
-
-### 7. Open the app
+### 4. Open the app
 
 Visit **http://localhost:5173** in your browser.
 
 ---
 
 ## Available Scripts
+
+### Root (project root)
+
+| Command              | Description                                         |
+| -------------------- | --------------------------------------------------- |
+| `make install`       | Install deps for both packages                      |
+| `make setup`         | Configure `.env` files + apply DB migrations        |
+| `make dev`           | Start both API (`:8787`) and UI (`:5173`)           |
+| `npm run dev:api`    | Start API only                                      |
+| `npm run dev:ui`     | Start UI only                                       |
+| `npm run test:api`   | Run API unit tests                                  |
 
 ### pagecraft-api
 
@@ -164,6 +118,11 @@ Visit **http://localhost:5173** in your browser.
 ## Project Structure
 
 ```
+Makefile                # Dev orchestration (install, setup, dev)
+scripts/
+  setup.mjs             # Setup automation script
+package.json            # Root scripts (npm --prefix delegates)
+
 pagecraft-api/          # Cloudflare Worker (Hono)
   src/
     index.ts            # Entrypoint, CORS, route mounting
@@ -207,9 +166,9 @@ pagecraft-ui/           # Vite + React 19
 
 | Symptom                                     | Likely cause                    | Fix                                                                                   |
 | ------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
-| `wrangler: command not found`               | Wrangler not installed globally | `npm install -g wrangler`                                                             |
-| `✘ [ERROR] Could not find ... pagecraft-db` | D1 database not created         | Run `npx wrangler d1 create pagecraft-db` first (step 3a)                             |
-| `SQLITE_ERROR: no such table: books`        | Migrations not applied          | Run `npx wrangler d1 migrations apply pagecraft-db --local` — ensure step 3b was run  |
+| `wrangler: command not found`               | Wrangler not installed           | Run with `npx wrangler` instead, or `npm install -g wrangler`                        |
+| `✘ [ERROR] Could not find ... pagecraft-db` | D1 database not created          | Run `make setup` or `npx wrangler d1 create pagecraft-db` for deploy                  |
+| `SQLITE_ERROR: no such table: books`        | Migrations not applied           | Run `make setup` or `npx wrangler d1 migrations apply pagecraft-db --local`           |
 | CORS error in browser console               | `FRONTEND_URL` mismatch         | Set `FRONTEND_URL=http://localhost:5173` in `pagecraft-api/.env`                      |
 | `401 Unauthorized` from Gemini              | Missing or invalid API key      | Check `GEMINI_API_KEY` in `pagecraft-api/.env`                                        |
 | Illustration generation fails silently      | R2 credentials not configured   | Set `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` in `pagecraft-api/.env` |

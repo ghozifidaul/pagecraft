@@ -1,0 +1,14 @@
+{
+  "name": "pagecraft",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix pagecraft-api install && npm --prefix pagecraft-ui install",
+    "setup": "node scripts/setup.mjs",
+    "dev:api": "npm --prefix pagecraft-api run dev",
+    "dev:ui": "npm --prefix pagecraft-ui run dev",
+    "test:api": "npm --prefix pagecraft-api run test",
+    "test:api:all": "npm --prefix pagecraft-api run test:all",
+    "build:ui": "npm --prefix pagecraft-ui run build",
+    "lint:ui": "npm --prefix pagecraft-ui run lint"
+  }
+}
